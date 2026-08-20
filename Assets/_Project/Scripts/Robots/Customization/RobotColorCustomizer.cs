@@ -31,17 +31,17 @@ namespace Robot.Robots.Customization
         [SerializeField] private ColorTheme activeTheme = ColorTheme.Red;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Presets (Vibrant Multiplayer Colors)")]
+        [Header("Presets (Pandazole-Harmonized Multiplayer Colors)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
-            new ColorPreset { theme = ColorTheme.Red, name = "Kırmızı (Neon Red)", primaryColor = new Color(0.95f, 0.10f, 0.15f), emissiveColor = new Color(1.0f, 0.20f, 0.25f), uvOffset = Vector2.zero },
-            new ColorPreset { theme = ColorTheme.Orange, name = "Turuncu (Sunset Orange)", primaryColor = new Color(1.0f, 0.45f, 0.0f), emissiveColor = new Color(1.0f, 0.55f, 0.1f), uvOffset = new Vector2(0.205f, 0.03125f) },
-            new ColorPreset { theme = ColorTheme.Yellow, name = "Sarı (Cyber Yellow)", primaryColor = new Color(1.0f, 0.85f, 0.0f), emissiveColor = new Color(1.0f, 0.93f, 0.1f), uvOffset = new Vector2(0.41f, 0.0625f) },
-            new ColorPreset { theme = ColorTheme.Green, name = "Yeşil (Electric Green)", primaryColor = new Color(0.10f, 0.85f, 0.25f), emissiveColor = new Color(0.20f, 1.0f, 0.35f), uvOffset = new Vector2(0f, 0.09375f) },
-            new ColorPreset { theme = ColorTheme.Blue, name = "Mavi (Cobalt Blue)", primaryColor = new Color(0.05f, 0.50f, 1.0f), emissiveColor = new Color(0.0f, 0.75f, 1.0f), uvOffset = new Vector2(0.205f, 0.125f) },
-            new ColorPreset { theme = ColorTheme.Purple, name = "Mor (Deep Purple)", primaryColor = new Color(0.65f, 0.10f, 0.95f), emissiveColor = new Color(0.75f, 0.20f, 1.0f), uvOffset = new Vector2(0.41f, 0.15625f) },
-            new ColorPreset { theme = ColorTheme.Pink, name = "Pembe (Hot Pink)", primaryColor = new Color(1.0f, 0.20f, 0.65f), emissiveColor = new Color(1.0f, 0.40f, 0.80f), uvOffset = new Vector2(0f, 0.1875f) }
+            new ColorPreset { theme = ColorTheme.Red, name = "Pandazole Kırmızı (Terracotta Red)", primaryColor = new Color(0.85f, 0.22f, 0.23f), emissiveColor = new Color(1.0f, 0.36f, 0.37f), uvOffset = Vector2.zero },
+            new ColorPreset { theme = ColorTheme.Orange, name = "Pandazole Turuncu (Warm Amber)", primaryColor = new Color(0.91f, 0.44f, 0.32f), emissiveColor = new Color(0.96f, 0.64f, 0.38f), uvOffset = new Vector2(0.205f, 0.03125f) },
+            new ColorPreset { theme = ColorTheme.Yellow, name = "Pandazole Sarı (Mustard Gold)", primaryColor = new Color(0.91f, 0.77f, 0.41f), emissiveColor = new Color(0.96f, 0.85f, 0.45f), uvOffset = new Vector2(0.41f, 0.0625f) },
+            new ColorPreset { theme = ColorTheme.Green, name = "Pandazole Yeşil (Meadow Green)", primaryColor = new Color(0.31f, 0.62f, 0.35f), emissiveColor = new Color(0.46f, 0.78f, 0.40f), uvOffset = new Vector2(0f, 0.09375f) },
+            new ColorPreset { theme = ColorTheme.Blue, name = "Pandazole Mavi (Coastal Teal/Blue)", primaryColor = new Color(0.20f, 0.58f, 0.68f), emissiveColor = new Color(0.30f, 0.78f, 0.88f), uvOffset = new Vector2(0.205f, 0.125f) },
+            new ColorPreset { theme = ColorTheme.Purple, name = "Pandazole Mor (Lowpoly Berry)", primaryColor = new Color(0.55f, 0.25f, 0.68f), emissiveColor = new Color(0.71f, 0.38f, 0.85f), uvOffset = new Vector2(0.41f, 0.15625f) },
+            new ColorPreset { theme = ColorTheme.Pink, name = "Pandazole Pembe (Coral Rose)", primaryColor = new Color(0.92f, 0.42f, 0.55f), emissiveColor = new Color(1.0f, 0.55f, 0.68f), uvOffset = new Vector2(0f, 0.1875f) }
         };
 
         private MaterialPropertyBlock propBlock;
