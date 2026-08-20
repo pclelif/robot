@@ -8,13 +8,13 @@ namespace Robot.Robots.Customization
     {
         public enum ColorTheme
         {
-            CeramicWhite = 0,
-            PandaCyan = 1,
-            PandaTerracotta = 2,
-            PandaMeadowGreen = 3,
-            PandaAmberGold = 4,
-            PandaSlateDark = 5,
-            PandaRoseCoral = 6
+            Red = 0,
+            Orange = 1,
+            Yellow = 2,
+            Green = 3,
+            Blue = 4,
+            Purple = 5,
+            Pink = 6
         }
 
         [Serializable]
@@ -28,20 +28,20 @@ namespace Robot.Robots.Customization
         }
 
         [Header("Configuration")]
-        [SerializeField] private ColorTheme activeTheme = ColorTheme.CeramicWhite;
+        [SerializeField] private ColorTheme activeTheme = ColorTheme.Red;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Presets (Matched with Pandazole Low-Poly Palette)")]
+        [Header("Presets (Vibrant Multiplayer Colors)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
-            new ColorPreset { theme = ColorTheme.CeramicWhite, name = "Panda Ceramic White", primaryColor = new Color(0.97f, 0.98f, 0.98f), emissiveColor = new Color(0f, 0.82f, 0.98f), uvOffset = Vector2.zero },
-            new ColorPreset { theme = ColorTheme.PandaCyan, name = "Panda City Cyan", primaryColor = new Color(0.23f, 0.69f, 0.66f), emissiveColor = new Color(0f, 0.95f, 0.95f), uvOffset = new Vector2(0.205f, 0.03125f) },
-            new ColorPreset { theme = ColorTheme.PandaTerracotta, name = "Panda Terracotta Orange", primaryColor = new Color(0.88f, 0.34f, 0.22f), emissiveColor = new Color(1f, 0.42f, 0.25f), uvOffset = new Vector2(0.41f, 0.0625f) },
-            new ColorPreset { theme = ColorTheme.PandaMeadowGreen, name = "Panda Meadow Green", primaryColor = new Color(0.31f, 0.62f, 0.24f), emissiveColor = new Color(0.46f, 0.73f, 0.11f), uvOffset = new Vector2(0f, 0.09375f) },
-            new ColorPreset { theme = ColorTheme.PandaAmberGold, name = "Panda Amber Gold", primaryColor = new Color(0.96f, 0.64f, 0.38f), emissiveColor = new Color(1f, 0.76f, 0.15f), uvOffset = new Vector2(0.205f, 0.125f) },
-            new ColorPreset { theme = ColorTheme.PandaSlateDark, name = "Panda Industrial Slate", primaryColor = new Color(0.17f, 0.18f, 0.26f), emissiveColor = new Color(0f, 0.68f, 0.71f), uvOffset = new Vector2(0.41f, 0.15625f) },
-            new ColorPreset { theme = ColorTheme.PandaRoseCoral, name = "Panda Rose Coral", primaryColor = new Color(0.90f, 0.22f, 0.27f), emissiveColor = new Color(1f, 0.3f, 0.43f), uvOffset = new Vector2(0f, 0.1875f) }
+            new ColorPreset { theme = ColorTheme.Red, name = "Kırmızı (Neon Red)", primaryColor = new Color(0.95f, 0.10f, 0.15f), emissiveColor = new Color(1.0f, 0.20f, 0.25f), uvOffset = Vector2.zero },
+            new ColorPreset { theme = ColorTheme.Orange, name = "Turuncu (Sunset Orange)", primaryColor = new Color(1.0f, 0.45f, 0.0f), emissiveColor = new Color(1.0f, 0.55f, 0.1f), uvOffset = new Vector2(0.205f, 0.03125f) },
+            new ColorPreset { theme = ColorTheme.Yellow, name = "Sarı (Cyber Yellow)", primaryColor = new Color(1.0f, 0.85f, 0.0f), emissiveColor = new Color(1.0f, 0.93f, 0.1f), uvOffset = new Vector2(0.41f, 0.0625f) },
+            new ColorPreset { theme = ColorTheme.Green, name = "Yeşil (Electric Green)", primaryColor = new Color(0.10f, 0.85f, 0.25f), emissiveColor = new Color(0.20f, 1.0f, 0.35f), uvOffset = new Vector2(0f, 0.09375f) },
+            new ColorPreset { theme = ColorTheme.Blue, name = "Mavi (Cobalt Blue)", primaryColor = new Color(0.05f, 0.50f, 1.0f), emissiveColor = new Color(0.0f, 0.75f, 1.0f), uvOffset = new Vector2(0.205f, 0.125f) },
+            new ColorPreset { theme = ColorTheme.Purple, name = "Mor (Deep Purple)", primaryColor = new Color(0.65f, 0.10f, 0.95f), emissiveColor = new Color(0.75f, 0.20f, 1.0f), uvOffset = new Vector2(0.41f, 0.15625f) },
+            new ColorPreset { theme = ColorTheme.Pink, name = "Pembe (Hot Pink)", primaryColor = new Color(1.0f, 0.20f, 0.65f), emissiveColor = new Color(1.0f, 0.40f, 0.80f), uvOffset = new Vector2(0f, 0.1875f) }
         };
 
         private MaterialPropertyBlock propBlock;
