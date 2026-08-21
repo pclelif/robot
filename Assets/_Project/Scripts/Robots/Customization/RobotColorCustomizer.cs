@@ -9,15 +9,15 @@ namespace Robot.Robots.Customization
         public enum ColorTheme
         {
             StealthBlack = 0,    // Siyah (DEFAULT INITIAL THEME)
-            BoldRed = 1,         // Kırmızı (Rich Bold Red - Non-pastel)
-            VividOrange = 2,     // Turuncu (Vivid Saturated Orange - Non-pastel)
-            HoneyYellow = 3,     // Sarı (Bright Honey Yellow)
-            KhakiGreen = 4,      // Yeşil (Tactical Olive Khaki Green)
-            TechBlue = 5,        // Mavi (Crisp Tech Blue)
-            RoyalPurple = 6,     // Mor (Deep Royal Purple)
-            VibrantPink = 7,     // Pembe (Vibrant Coral Pink)
-            EspressoBrown = 8,   // Kahverengi (Deep Rich Espresso Brown)
-            WarmCream = 9        // Beyaz (Warm Cream White)
+            CrimsonRed = 1,      // Kırmızı (Harmonized Satin Crimson)
+            SunsetOrange = 2,    // Turuncu (Harmonized Sunset Orange)
+            GoldYellow = 3,      // Sarı (Harmonized Gold Yellow)
+            SageGreen = 4,       // Yeşil (Harmonized Sage Haki Green)
+            CobaltBlue = 5,      // Mavi (Harmonized Cobalt Blue)
+            VelvetPurple = 6,    // Mor (Harmonized Velvet Purple)
+            CoralPink = 7,       // Pembe (Harmonized Coral Rose Pink)
+            MochaBrown = 8,      // Kahverengi (Harmonized Mocha Brown)
+            IvoryCream = 9       // Krem Beyazı (Harmonized Ivory Cream)
         }
 
         public enum EyeColorMode
@@ -40,7 +40,7 @@ namespace Robot.Robots.Customization
         [SerializeField] private EyeColorMode eyeMode = EyeColorMode.SleekBlack;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Color Presets (Custom User Sequence: Siyah -> Kırmızı -> Turuncu -> Sarı -> Yeşil -> Mavi -> Mor -> Pembe -> Kahverengi -> Krem Beyazı)")]
+        [Header("Color Presets (Harmonized Satin Palette - 65% Saturation / 75% Value Scale)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
@@ -48,70 +48,70 @@ namespace Robot.Robots.Customization
             { 
                 theme = ColorTheme.StealthBlack, 
                 name = "Karbon Siyah (Stealth Black)", 
-                bodyColor = new Color(0.14f, 0.15f, 0.17f), // Deep matte black
-                jointColor = new Color(0.08f, 0.08f, 0.10f)
+                bodyColor = new Color(0.16f, 0.17f, 0.20f), // Sleek matte carbon
+                jointColor = new Color(0.09f, 0.09f, 0.11f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.BoldRed, 
-                name = "Canlı Kırmızı (Bold Ruby Red)", 
-                bodyColor = new Color(0.88f, 0.08f, 0.12f), // Saturated deep bold red (non-pastel)
+                theme = ColorTheme.CrimsonRed, 
+                name = "Koyu Kırmızı (Harmonized Satin Crimson)", 
+                bodyColor = new Color(0.82f, 0.22f, 0.24f), // Harmonized Satin Crimson
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.VividOrange, 
-                name = "Canlı Turuncu (Vivid Citrus Orange)", 
-                bodyColor = new Color(0.96f, 0.42f, 0.02f), // Saturated vivid citrus orange (non-pastel)
+                theme = ColorTheme.SunsetOrange, 
+                name = "Canlı Turuncu (Harmonized Sunset Orange)", 
+                bodyColor = new Color(0.88f, 0.42f, 0.18f), // Harmonized Sunset Amber Orange
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.HoneyYellow, 
-                name = "Bal Sarısı (Bright Honey Yellow)", 
-                bodyColor = new Color(0.96f, 0.78f, 0.15f), 
+                theme = ColorTheme.GoldYellow, 
+                name = "Bal Sarısı (Harmonized Gold Yellow)", 
+                bodyColor = new Color(0.88f, 0.68f, 0.20f), // Harmonized Mustard Gold
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.KhakiGreen, 
-                name = "Haki Yeşil (Tactical Olive Khaki Green)", 
-                bodyColor = new Color(0.32f, 0.45f, 0.26f), // Tactical khaki / olive green
+                theme = ColorTheme.SageGreen, 
+                name = "Haki Yeşil (Harmonized Sage Khaki Green)", 
+                bodyColor = new Color(0.32f, 0.55f, 0.35f), // Harmonized Sage Khaki
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.TechBlue, 
-                name = "Çelik Mavi (Crisp Tech Blue)", 
-                bodyColor = new Color(0.18f, 0.48f, 0.85f), 
+                theme = ColorTheme.CobaltBlue, 
+                name = "Çelik Mavi (Harmonized Cobalt Blue)", 
+                bodyColor = new Color(0.20f, 0.48f, 0.78f), // Harmonized Ocean Cobalt
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.RoyalPurple, 
-                name = "Asil Mor (Deep Royal Purple)", 
-                bodyColor = new Color(0.55f, 0.20f, 0.78f), 
+                theme = ColorTheme.VelvetPurple, 
+                name = "Asil Mor (Harmonized Velvet Purple)", 
+                bodyColor = new Color(0.52f, 0.28f, 0.75f), // Harmonized Velvet Purple
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.VibrantPink, 
-                name = "Canlı Pembe (Vibrant Coral Pink)", 
-                bodyColor = new Color(0.95f, 0.40f, 0.58f), 
+                theme = ColorTheme.CoralPink, 
+                name = "Canlı Pembe (Harmonized Coral Rose Pink)", 
+                bodyColor = new Color(0.88f, 0.35f, 0.52f), // Harmonized Coral Rose
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.EspressoBrown, 
-                name = "Çikolata Kahve (Deep Espresso Brown)", 
-                bodyColor = new Color(0.42f, 0.22f, 0.10f), 
+                theme = ColorTheme.MochaBrown, 
+                name = "Çikolata Kahve (Harmonized Mocha Brown)", 
+                bodyColor = new Color(0.48f, 0.30f, 0.20f), // Harmonized Mocha Brown
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.WarmCream, 
-                name = "Krem Beyazı (Warm Cream White)", 
-                bodyColor = new Color(0.94f, 0.91f, 0.84f), // Warm cream white
+                theme = ColorTheme.IvoryCream, 
+                name = "Krem Beyazı (Harmonized Ivory Cream)", 
+                bodyColor = new Color(0.90f, 0.86f, 0.78f), // Harmonized Warm Ivory Cream
                 jointColor = new Color(0.14f, 0.14f, 0.16f)
             }
         };

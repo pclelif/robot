@@ -417,6 +417,37 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &531459626
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 531459627}
+  m_Layer: 0
+  m_Name: GroundCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &531459627
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 531459626}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.38169, y: 2.12996, z: 2.2106}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,6 +520,10 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 98604344}
+    - target: {fileID: 2523697088536518646, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
+      propertyPath: groundCheckPoint
+      value: 
+      objectReference: {fileID: 531459627}
     - target: {fileID: 2523697088536518647, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: activeTheme
       value: 3
@@ -499,7 +534,7 @@ PrefabInstance:
       objectReference: {fileID: 867812604}
     - target: {fileID: 2523697088536518650, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2634395073816603646, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -558,3 +593,4 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 1076287275}
+  - {fileID: 531459627}
