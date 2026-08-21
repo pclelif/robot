@@ -8,15 +8,14 @@ namespace Robot.Player.Movement
         [Header("Movement Settings")]
         [SerializeField] private float walkSpeed = 6.0f;
         [SerializeField] private float runSpeed = 10.0f;
-        [SerializeField] private float rotationSpeed = 18.0f;
-        [SerializeField] private float acceleration = 35.0f;
+        [SerializeField] private float rotationSpeed = 15.0f;
+        [SerializeField] private float acceleration = 15.0f;
 
         [Header("Gravity & Grounding")]
-        [SerializeField] private float gravity = -15.0f;
-        [SerializeField] private float groundedGravity = -2.0f;
+        [SerializeField] private float gravity = -9.81f;
         [SerializeField] private Transform groundCheckPoint;
-        [SerializeField] private float groundCheckRadius = 0.4f;
-        [SerializeField] private LayerMask groundMask = ~0; // Default to all layers
+        [SerializeField] private float groundCheckRadius = 0.2f;
+        [SerializeField] private LayerMask groundMask = ~0;
 
         // Public Properties
         public Vector2 MovementInput { get; set; }
@@ -29,7 +28,7 @@ namespace Robot.Player.Movement
         private Animator animator;
 
         // Internal Movement State
-        private Vector3 verticalVelocity;
+        private float verticalVelocity;
         private float currentSpeed;
         private Vector3 moveDirection;
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -43,7 +42,7 @@ namespace Robot.Player.Movement
 
             if (animator != null)
             {
-                animator.applyRootMotion = false; // Prevent animator root motion from locking position
+                animator.applyRootMotion = false;
             }
 
             EnsureGroundFloorExists();
@@ -51,16 +50,14 @@ namespace Robot.Player.Movement
 
         private void Start()
         {
-            // Position robot safely above ground level at Start
             if (transform.position.y < 0.1f)
             {
-                transform.position = new Vector3(transform.position.x, 0.15f, transform.position.z);
+                transform.position = new Vector3(transform.position.x, 0.5f, transform.position.z);
             }
         }
 
         private void EnsureGroundFloorExists()
         {
-            // If no floor collider exists in scene, create a default floor plane
             Collider[] colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
             bool hasFloor = false;
             foreach (var col in colliders)
@@ -77,7 +74,7 @@ namespace Robot.Player.Movement
                 GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 floor.name = "Auto_Environment_Floor";
                 floor.transform.position = new Vector3(0f, 0f, 0f);
-                floor.transform.localScale = new Vector3(20f, 1f, 20f); // 200x200 floor plane
+                floor.transform.localScale = new Vector3(20f, 1f, 20f);
 
                 Renderer ren = floor.GetComponent<Renderer>();
                 if (ren != null)
@@ -86,7 +83,7 @@ namespace Robot.Player.Movement
                     if (urpLit != null)
                     {
                         Material mat = new Material(urpLit);
-                        mat.color = new Color(0.25f, 0.28f, 0.32f); // Slate gray floor
+                        mat.color = new Color(0.25f, 0.28f, 0.32f);
                         ren.sharedMaterial = mat;
                     }
                 }
@@ -102,19 +99,18 @@ namespace Robot.Player.Movement
 
         private void HandleGrounding()
         {
-            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
-            
-            bool rayGrounded = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, 0.4f, groundMask, QueryTriggerInteraction.Ignore);
-            IsGrounded = rayGrounded || characterController.isGrounded;
+            // CharacterController'ın kendi yerleşik zemin kontrolü en güvenilirleşmiş yoldur
+            IsGrounded = characterController.isGrounded;
 
-            if (IsGrounded && verticalVelocity.y < 0)
+            if (IsGrounded)
             {
-                verticalVelocity.y = groundedGravity;
+                // Yerdeyken hafifçe aşağı bas ki havada süzülmesin
+                verticalVelocity = -2f;
             }
             else
             {
-                verticalVelocity.y += gravity * Time.deltaTime;
-                verticalVelocity.y = Mathf.Max(verticalVelocity.y, -15.0f); // Clamp downward velocity
+                // Havadayken yerçekimi uygula
+                verticalVelocity += gravity * Time.deltaTime;
             }
         }
 
@@ -124,7 +120,6 @@ namespace Robot.Player.Movement
             float v = MovementInput.y;
             bool run = false;
 
-            // Direct KeyCode checks (W = Forward +Z, S = Backward -Z, D = Right +X, A = Left -X)
             try
             {
                 if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
@@ -179,24 +174,18 @@ namespace Robot.Player.Movement
 
             if (isMoving)
             {
-                // Pure Direct World WASD Movement: W = +Z (North), S = -Z (South), D = +X (East), A = -X (West)
-                // Completely ignores static/tilted scene camera angles so W ALWAYS walks forward in space!
                 moveDirection = new Vector3(inputDir.x, 0f, inputDir.z).normalized;
 
-                if (moveDirection.sqrMagnitude > 0.001f)
+                if (moveDirection != Vector3.zero)
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
                     transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
                 }
             }
-            else
-            {
-                moveDirection = Vector3.zero;
-            }
 
-            // Single combined CharacterController.Move call per frame
-            Vector3 finalVelocity = (moveDirection * currentSpeed) + verticalVelocity;
-            characterController.Move(finalVelocity * Time.deltaTime);
+            // Hareketi doğrudan yatay yön ve düşey hız (yerçekimi) olarak birleştir
+            Vector3 finalMove = (moveDirection * currentSpeed) + (Vector3.up * verticalVelocity);
+            characterController.Move(finalMove * Time.deltaTime);
 
             CurrentSpeedNormalized = targetSpeed > 0f ? (currentSpeed / runSpeed) : 0f;
         }
