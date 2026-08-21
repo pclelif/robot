@@ -8,15 +8,15 @@ namespace Robot.Robots.Customization
     {
         public enum ColorTheme
         {
-            CrimsonRed = 0,      // Rich Crimson Red (DEFAULT INITIAL THEME)
+            CrimsonRed = 0,      // Pure Striking Ruby Red (DEFAULT INITIAL THEME)
             PearlWhite = 1,      // Pristine Pearl White (Lightest)
             HoneyYellow = 2,     // Bright Honey Yellow
-            CoralPink = 3,       // Bright Vibrant Coral Pink (Perfect balance: non-dark, non-pale)
-            CopperAmber = 4,     // Warm Burnt Copper
+            CoralPink = 3,       // Bright Vibrant Coral Pink
+            CopperAmber = 4,     // Pure Bright Tangerine Orange (Distinct from Red & Brown)
             EmeraldGreen = 5,    // Tactical Forest Green
             SteelBlue = 6,       // Crisp Tech Blue
             RoyalViolet = 7,     // Deep Royal Purple
-            MahoganyBrown = 8,   // Warm Mahogany Brown
+            MahoganyBrown = 8,   // Deep Rich Chocolate Brown (Distinct from Red & Orange)
             StealthCharcoal = 9  // Deep Stealth Charcoal (Darkest)
         }
 
@@ -40,15 +40,15 @@ namespace Robot.Robots.Customization
         [SerializeField] private EyeColorMode eyeMode = EyeColorMode.SleekBlack;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Color Presets (Ordered Lightest -> Darkest, Starting Red)")]
+        [Header("Color Presets (10 Distinct High-Contrast Themes)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
             new ColorPreset 
             { 
                 theme = ColorTheme.CrimsonRed, 
-                name = "Koyu Kırmızı (Deep Crimson Red)", 
-                bodyColor = new Color(0.85f, 0.18f, 0.22f), 
+                name = "Koyu Kırmızı (Pure Ruby Red)", 
+                bodyColor = new Color(0.92f, 0.10f, 0.14f), // Striking Pure Ruby Red
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
@@ -69,14 +69,14 @@ namespace Robot.Robots.Customization
             { 
                 theme = ColorTheme.CoralPink, 
                 name = "Mercan Pembesi (Vibrant Coral Pink)", 
-                bodyColor = new Color(0.96f, 0.45f, 0.62f), // Bright & clear coral pink
+                bodyColor = new Color(0.96f, 0.45f, 0.62f), 
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
                 theme = ColorTheme.CopperAmber, 
-                name = "Bakır Turuncu (Warm Copper Amber)", 
-                bodyColor = new Color(0.90f, 0.48f, 0.18f), 
+                name = "Canlı Turuncu (Bright Tangerine Orange)", 
+                bodyColor = new Color(0.98f, 0.52f, 0.05f), // Distinct Citrus Orange
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
@@ -103,8 +103,8 @@ namespace Robot.Robots.Customization
             new ColorPreset 
             { 
                 theme = ColorTheme.MahoganyBrown, 
-                name = "Maun Kahverengi (Mahogany Brown)", 
-                bodyColor = new Color(0.58f, 0.34f, 0.20f), 
+                name = "Çikolata Kahve (Deep Espresso Brown)", 
+                bodyColor = new Color(0.42f, 0.22f, 0.10f), // Distinct Dark Espresso Chocolate
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
