@@ -6,7 +6,7 @@ namespace Robot.Player.CameraControl
 {
     /// <summary>
     /// Smooth 3rd-person orbital camera controlled by mouse for world exploration.
-    /// Supports mouse look, zoom, obstacle deocclusion, and camera-relative WASD controls.
+    /// Provides smooth, controlled mouse orbit without wild camera jumps.
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
@@ -28,10 +28,7 @@ namespace Robot.Player.CameraControl
 
         [Header("Mouse Sensitivity")]
         [SerializeField] private bool enableMouseLook = true;
-        [SerializeField, Min(0.01f)] private float mouseLookSensitivity = 0.15f;
-
-        [Header("Cursor Lock")]
-        [SerializeField] private bool lockCursorOnStart = true;
+        [SerializeField, Min(0.01f)] private float mouseLookSensitivity = 0.2f;
 
         private CinemachineCamera virtualCamera;
         private CinemachineOrbitalFollow orbitalFollow;
@@ -57,11 +54,6 @@ namespace Robot.Player.CameraControl
 
         private void Start()
         {
-            if (lockCursorOnStart)
-            {
-                LockCursor();
-            }
-
             ResolveInput();
             AssignTarget();
             ConfigureDeoccluderAndOrbital();
@@ -123,10 +115,12 @@ namespace Robot.Player.CameraControl
 
         private void HandleCursorLocking()
         {
-            if (UnityEngine.Input.GetMouseButtonDown(0) || UnityEngine.Input.GetMouseButtonDown(1))
+            // Lock cursor on Right Click or Left Click in Game view
+            if (UnityEngine.Input.GetMouseButtonDown(1) || UnityEngine.Input.GetMouseButtonDown(0))
             {
                 LockCursor();
             }
+            // Unlock cursor on ESC key
             else if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
             {
                 UnlockCursor();
@@ -147,12 +141,16 @@ namespace Robot.Player.CameraControl
 
         private Vector2 GetLookDelta()
         {
+            // Read mouse delta smoothly without artificial multiplier
             float mouseX = UnityEngine.Input.GetAxis("Mouse X");
             float mouseY = UnityEngine.Input.GetAxis("Mouse Y");
 
-            if (Mathf.Abs(mouseX) > 0.001f || Mathf.Abs(mouseY) > 0.001f)
+            if (Mathf.Abs(mouseX) > 0.0001f || Mathf.Abs(mouseY) > 0.0001f)
             {
-                return new Vector2(mouseX * 15f, mouseY * 15f);
+                // Clamp delta per frame to prevent wild camera snaps
+                mouseX = Mathf.Clamp(mouseX, -20f, 20f);
+                mouseY = Mathf.Clamp(mouseY, -20f, 20f);
+                return new Vector2(mouseX, mouseY);
             }
 
             if (input != null && input.LookInput.sqrMagnitude > 0.0001f)
