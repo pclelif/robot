@@ -8,16 +8,16 @@ namespace Robot.Robots.Customization
     {
         public enum ColorTheme
         {
-            SteelBlue = 0,       // Sleek Tech Blue
-            StealthCharcoal = 1, // Deep Matte Black / Carbon
-            CrimsonRed = 2,      // Rich Deep Red
-            EmeraldGreen = 3,    // Tactical Forest Green
+            CrimsonRed = 0,      // Rich Crimson Red (DEFAULT INITIAL THEME)
+            PearlWhite = 1,      // Pristine Pearl White (Lightest)
+            HoneyYellow = 2,     // Bright Honey Yellow
+            CoralPink = 3,       // Bright Vibrant Coral Pink (Perfect balance: non-dark, non-pale)
             CopperAmber = 4,     // Warm Burnt Copper
-            RoyalViolet = 5,     // Deep Satin Purple
-            VibrantPink = 6,     // Prominent Vibrant Pink
-            HoneyYellow = 7,     // Rich Mustard Honey Yellow
-            PearlWhite = 8,      // Pristine Pearl White
-            MahoganyBrown = 9    // Warm Chocolate Mahogany Brown
+            EmeraldGreen = 5,    // Tactical Forest Green
+            SteelBlue = 6,       // Crisp Tech Blue
+            RoyalViolet = 7,     // Deep Royal Purple
+            MahoganyBrown = 8,   // Warm Mahogany Brown
+            StealthCharcoal = 9  // Deep Stealth Charcoal (Darkest)
         }
 
         public enum EyeColorMode
@@ -36,83 +36,83 @@ namespace Robot.Robots.Customization
         }
 
         [Header("Configuration")]
-        [SerializeField] private ColorTheme activeTheme = ColorTheme.SteelBlue;
+        [SerializeField] private ColorTheme activeTheme = ColorTheme.CrimsonRed; // Starts Red as requested!
         [SerializeField] private EyeColorMode eyeMode = EyeColorMode.SleekBlack;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Color Presets (10 Rich URP Shading Themes)")]
+        [Header("Color Presets (Ordered Lightest -> Darkest, Starting Red)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
             new ColorPreset 
             { 
-                theme = ColorTheme.SteelBlue, 
-                name = "Çelik Mavi (Tech Blue)", 
-                bodyColor = new Color(0.18f, 0.48f, 0.85f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.StealthCharcoal, 
-                name = "Karbon Siyah (Stealth Charcoal)", 
-                bodyColor = new Color(0.18f, 0.19f, 0.22f), 
-                jointColor = new Color(0.08f, 0.08f, 0.10f)
-            },
-            new ColorPreset 
-            { 
                 theme = ColorTheme.CrimsonRed, 
-                name = "Koyu Kırmızı (Deep Crimson)", 
-                bodyColor = new Color(0.82f, 0.15f, 0.18f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.EmeraldGreen, 
-                name = "Askeri Yeşil (Tactical Green)", 
-                bodyColor = new Color(0.20f, 0.65f, 0.32f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.CopperAmber, 
-                name = "Bakır Turuncu (Warm Copper)", 
-                bodyColor = new Color(0.88f, 0.42f, 0.15f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.RoyalViolet, 
-                name = "Asil Mor (Deep Purple)", 
-                bodyColor = new Color(0.55f, 0.20f, 0.78f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.VibrantPink, 
-                name = "Canlı Pembe (Vibrant Coral Pink)", 
-                bodyColor = new Color(0.95f, 0.28f, 0.55f), 
-                jointColor = new Color(0.12f, 0.12f, 0.14f)
-            },
-            new ColorPreset 
-            { 
-                theme = ColorTheme.HoneyYellow, 
-                name = "Bal Sarısı (Mustard Honey Yellow)", 
-                bodyColor = new Color(0.95f, 0.76f, 0.18f), 
+                name = "Koyu Kırmızı (Deep Crimson Red)", 
+                bodyColor = new Color(0.85f, 0.18f, 0.22f), 
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
                 theme = ColorTheme.PearlWhite, 
                 name = "İnci Beyazı (Pristine Pearl White)", 
-                bodyColor = new Color(0.92f, 0.93f, 0.95f), 
+                bodyColor = new Color(0.94f, 0.95f, 0.96f), 
                 jointColor = new Color(0.14f, 0.14f, 0.16f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.HoneyYellow, 
+                name = "Bal Sarısı (Bright Honey Yellow)", 
+                bodyColor = new Color(0.96f, 0.82f, 0.20f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.CoralPink, 
+                name = "Mercan Pembesi (Vibrant Coral Pink)", 
+                bodyColor = new Color(0.96f, 0.45f, 0.62f), // Bright & clear coral pink
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.CopperAmber, 
+                name = "Bakır Turuncu (Warm Copper Amber)", 
+                bodyColor = new Color(0.90f, 0.48f, 0.18f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.EmeraldGreen, 
+                name = "Askeri Yeşil (Tactical Emerald Green)", 
+                bodyColor = new Color(0.22f, 0.68f, 0.35f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.SteelBlue, 
+                name = "Çelik Mavi (Crisp Steel Blue)", 
+                bodyColor = new Color(0.20f, 0.52f, 0.88f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.RoyalViolet, 
+                name = "Asil Mor (Deep Royal Purple)", 
+                bodyColor = new Color(0.58f, 0.24f, 0.82f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
             },
             new ColorPreset 
             { 
                 theme = ColorTheme.MahoganyBrown, 
                 name = "Maun Kahverengi (Mahogany Brown)", 
-                bodyColor = new Color(0.55f, 0.32f, 0.18f), 
+                bodyColor = new Color(0.58f, 0.34f, 0.20f), 
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.StealthCharcoal, 
+                name = "Karbon Siyah (Stealth Charcoal Black)", 
+                bodyColor = new Color(0.18f, 0.19f, 0.22f), 
+                jointColor = new Color(0.08f, 0.08f, 0.10f)
             }
         };
 
@@ -179,7 +179,7 @@ namespace Robot.Robots.Customization
 
                     string matName = mat.name;
 
-                    if (matName.Contains("M_AtlasOffset") || matName.Contains("Offset")) // Main Robot Armor & Body (Head, Chest, Arms, Legs)
+                    if (matName.Contains("M_AtlasOffset") || matName.Contains("Offset")) // Main Robot Armor & Body
                     {
                         mat.SetColor(BaseColorHash, preset.bodyColor);
                         mat.SetColor(ColorHash, preset.bodyColor);
