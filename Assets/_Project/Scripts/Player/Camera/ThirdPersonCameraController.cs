@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Robot.Player.CameraControl
 {
     /// <summary>
-    /// Pure Keyboard Chase Third-Person Camera:
+    /// Smooth Chase Third-Person Camera:
     /// - Mouse camera interaction is COMPLETELY AND PERMANENTLY REMOVED.
-    /// - Camera stays behind the robot and smoothly ROTATES WITH THE ROBOT when the robot turns left/right.
+    /// - Character turns its body visibly first on key press, then camera smoothly glides behind character's back.
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
@@ -21,7 +21,7 @@ namespace Robot.Player.CameraControl
 
         [Header("Camera Damping")]
         [SerializeField, Min(0.01f)] private float positionDamping = 0.05f;
-        [SerializeField, Min(0.01f)] private float rotationDamping = 0.15f;
+        [SerializeField, Min(0.01f)] private float rotationDamping = 0.45f;
 
         private CinemachineCamera virtualCamera;
         private CinemachineOrbitalFollow orbitalFollow;
@@ -94,7 +94,7 @@ namespace Robot.Player.CameraControl
             currentPivotPosition = Vector3.SmoothDamp(currentPivotPosition, desiredPivotPosition, ref positionVelocity, positionDamping);
             cameraPivotTarget.position = currentPivotPosition;
 
-            // 2. Yaw rotation smoothly follows character's rotation when character turns left/right
+            // 2. Yaw rotation smoothly glides behind character's rotation after character turns
             float targetYaw = target.eulerAngles.y;
             currentYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref yawVelocity, rotationDamping);
             cameraPivotTarget.rotation = Quaternion.Euler(0f, currentYaw, 0f);

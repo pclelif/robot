@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Robot.Input
 {
-    /// <summary>Owns Input System access and exposes device-independent player intent with Keyboard fallback.</summary>
+    /// <summary>Owns Input System access and exposes device-independent player intent with guaranteed zero-reset when keys are released.</summary>
     public sealed class PlayerInputReader : MonoBehaviour
     {
         [SerializeField] private InputActionAsset actions;
@@ -19,6 +19,7 @@ namespace Robot.Input
         private InputAction jumpAction;
         private InputAction interactAction;
         private InputAction pauseAction;
+
         private Vector2 moveInput;
         private Vector2 lookInput;
         private Vector2 mobileMoveInput;
@@ -91,27 +92,34 @@ namespace Robot.Input
 
         private void Update()
         {
-            // 1. Primary: Input System live value polling
+            Vector2 rawInput = Vector2.zero;
             if (moveAction != null && moveAction.enabled)
             {
-                moveInput = moveAction.ReadValue<Vector2>();
+                rawInput = moveAction.ReadValue<Vector2>();
             }
 
-            // 2. Safety Fallback: Legacy Keyboard WASD if Input System returns zero
-            if (moveInput.sqrMagnitude < 0.001f)
-            {
-                float x = 0f;
-                float y = 0f;
-                if (UnityEngine.Input.GetKey(KeyCode.W) || UnityEngine.Input.GetKey(KeyCode.UpArrow)) y += 1f;
-                if (UnityEngine.Input.GetKey(KeyCode.S) || UnityEngine.Input.GetKey(KeyCode.DownArrow)) y -= 1f;
-                if (UnityEngine.Input.GetKey(KeyCode.D) || UnityEngine.Input.GetKey(KeyCode.RightArrow)) x += 1f;
-                if (UnityEngine.Input.GetKey(KeyCode.A) || UnityEngine.Input.GetKey(KeyCode.LeftArrow)) x -= 1f;
+            // Direct keyboard WASD check
+            float x = 0f;
+            float y = 0f;
+            if (UnityEngine.Input.GetKey(KeyCode.W) || UnityEngine.Input.GetKey(KeyCode.UpArrow)) y += 1f;
+            if (UnityEngine.Input.GetKey(KeyCode.S) || UnityEngine.Input.GetKey(KeyCode.DownArrow)) y -= 1f;
+            if (UnityEngine.Input.GetKey(KeyCode.D) || UnityEngine.Input.GetKey(KeyCode.RightArrow)) x += 1f;
+            if (UnityEngine.Input.GetKey(KeyCode.A) || UnityEngine.Input.GetKey(KeyCode.LeftArrow)) x -= 1f;
 
-                Vector2 kbDir = new Vector2(x, y);
-                if (kbDir.sqrMagnitude > 0.001f)
-                {
-                    moveInput = kbDir.normalized;
-                }
+            Vector2 kbDir = new Vector2(x, y);
+
+            if (kbDir.sqrMagnitude > 0.001f)
+            {
+                moveInput = kbDir.normalized;
+            }
+            else if (rawInput.sqrMagnitude > 0.001f)
+            {
+                moveInput = rawInput;
+            }
+            else
+            {
+                // Guaranteed zero when no key is held to prevent endless Z movement
+                moveInput = Vector2.zero;
             }
         }
 
