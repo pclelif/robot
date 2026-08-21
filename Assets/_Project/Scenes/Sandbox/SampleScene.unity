@@ -497,6 +497,10 @@ PrefabInstance:
       propertyPath: colorCustomizer
       value: 
       objectReference: {fileID: 867812604}
+    - target: {fileID: 2523697088536518650, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2634395073816603646, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.14283
