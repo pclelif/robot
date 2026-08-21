@@ -8,8 +8,9 @@ namespace Robot.Player.Movement
         [Header("Movement Settings")]
         [SerializeField] private float walkSpeed = 6.0f;
         [SerializeField] private float runSpeed = 10.0f;
-        [SerializeField] private float rotationSpeed = 16.0f;
+        [SerializeField] private float rotationSpeed = 18.0f;
         [SerializeField] private float acceleration = 35.0f;
+        [SerializeField] private bool useCameraRelativeMovement = false; // Set false for direct, bulletproof WASD world movement
 
         [Header("Gravity & Grounding")]
         [SerializeField] private float gravity = -15.0f;
@@ -57,7 +58,7 @@ namespace Robot.Player.Movement
         {
             EnsureCameraReference();
 
-            // Safety check: position robot at y >= 0.1 if spawned below floor level
+            // Position robot safely above ground level at Start
             if (transform.position.y < -1f)
             {
                 transform.position = new Vector3(transform.position.x, 0.1f, transform.position.z);
@@ -74,7 +75,7 @@ namespace Robot.Player.Movement
 
         private void EnsureGroundFloorExists()
         {
-            // If no floor collider exists in scene, create a default floor plane so robot never falls into void
+            // If no floor collider exists in scene, create a default floor plane
             Collider[] colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
             bool hasFloor = false;
             foreach (var col in colliders)
@@ -119,7 +120,6 @@ namespace Robot.Player.Movement
         {
             Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
             
-            // Check Raycast / SphereCast downward
             bool rayGrounded = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, 0.35f, groundMask, QueryTriggerInteraction.Ignore);
             IsGrounded = rayGrounded || characterController.isGrounded;
 
@@ -140,7 +140,7 @@ namespace Robot.Player.Movement
             float v = MovementInput.y;
             bool run = false;
 
-            // Direct KeyCode checks for keyboard (W, A, S, D, Arrow keys, Shift)
+            // Direct KeyCode checks (W = Forward, S = Backward, D = Right, A = Left, Shift = Run)
             try
             {
                 if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
@@ -195,19 +195,26 @@ namespace Robot.Player.Movement
 
             if (isMoving)
             {
-                // Camera-relative movement calculation
-                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
-                Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
-                camForward.y = 0f;
-                camRight.y = 0f;
+                if (useCameraRelativeMovement && cameraTransform != null)
+                {
+                    Vector3 camForward = cameraTransform.forward;
+                    Vector3 camRight = cameraTransform.right;
+                    camForward.y = 0f;
+                    camRight.y = 0f;
 
-                if (camForward.sqrMagnitude < 0.001f) camForward = Vector3.forward;
-                else camForward.Normalize();
+                    if (camForward.sqrMagnitude < 0.001f) camForward = Vector3.forward;
+                    else camForward.Normalize();
 
-                if (camRight.sqrMagnitude < 0.001f) camRight = Vector3.right;
-                else camRight.Normalize();
+                    if (camRight.sqrMagnitude < 0.001f) camRight = Vector3.right;
+                    else camRight.Normalize();
 
-                moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+                    moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+                }
+                else
+                {
+                    // Direct World WASD Movement: W = +Z (Forward), S = -Z (Back), D = +X (Right), A = -X (Left)
+                    moveDirection = new Vector3(inputDir.x, 0f, inputDir.z).normalized;
+                }
 
                 if (moveDirection.sqrMagnitude > 0.001f)
                 {
@@ -220,7 +227,7 @@ namespace Robot.Player.Movement
                 moveDirection = Vector3.zero;
             }
 
-            // Execute single combined Move call per frame
+            // Single combined CharacterController.Move call per frame
             Vector3 finalVelocity = (moveDirection * currentSpeed) + verticalVelocity;
             characterController.Move(finalVelocity * Time.deltaTime);
 

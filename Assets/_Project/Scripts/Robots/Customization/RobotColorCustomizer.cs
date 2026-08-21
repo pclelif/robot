@@ -8,13 +8,16 @@ namespace Robot.Robots.Customization
     {
         public enum ColorTheme
         {
-            SteelBlue = 0,       // Sleek Matte Tech Blue
+            SteelBlue = 0,       // Sleek Tech Blue
             StealthCharcoal = 1, // Deep Matte Black / Carbon
             CrimsonRed = 2,      // Rich Deep Red
             EmeraldGreen = 3,    // Tactical Forest Green
             CopperAmber = 4,     // Warm Burnt Copper
             RoyalViolet = 5,     // Deep Satin Purple
-            CoralQuartz = 6      // Soft Rose Quartz
+            VibrantPink = 6,     // Prominent Vibrant Pink
+            HoneyYellow = 7,     // Rich Mustard Honey Yellow
+            PearlWhite = 8,      // Pristine Pearl White
+            MahoganyBrown = 9    // Warm Chocolate Mahogany Brown
         }
 
         public enum EyeColorMode
@@ -37,7 +40,7 @@ namespace Robot.Robots.Customization
         [SerializeField] private EyeColorMode eyeMode = EyeColorMode.SleekBlack;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Color Presets (Clean URP Shading - Solid Body, Non-Gray)")]
+        [Header("Color Presets (10 Rich URP Shading Themes)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
@@ -85,9 +88,30 @@ namespace Robot.Robots.Customization
             },
             new ColorPreset 
             { 
-                theme = ColorTheme.CoralQuartz, 
-                name = "Gül Pembesi (Rose Quartz)", 
-                bodyColor = new Color(0.88f, 0.38f, 0.55f), 
+                theme = ColorTheme.VibrantPink, 
+                name = "Canlı Pembe (Vibrant Coral Pink)", 
+                bodyColor = new Color(0.95f, 0.28f, 0.55f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.HoneyYellow, 
+                name = "Bal Sarısı (Mustard Honey Yellow)", 
+                bodyColor = new Color(0.95f, 0.76f, 0.18f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.PearlWhite, 
+                name = "İnci Beyazı (Pristine Pearl White)", 
+                bodyColor = new Color(0.92f, 0.93f, 0.95f), 
+                jointColor = new Color(0.14f, 0.14f, 0.16f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.MahoganyBrown, 
+                name = "Maun Kahverengi (Mahogany Brown)", 
+                bodyColor = new Color(0.55f, 0.32f, 0.18f), 
                 jointColor = new Color(0.12f, 0.12f, 0.14f)
             }
         };
@@ -169,7 +193,7 @@ namespace Robot.Robots.Customization
                         if (mat.HasProperty(SmoothnessHash)) mat.SetFloat(SmoothnessHash, 0.5f);
                         if (mat.HasProperty(MetallicHash)) mat.SetFloat(MetallicHash, 0.7f);
                     }
-                    else if (matName.Contains("M_AtlasEmissive") || matName.Contains("Emissive")) // Eyes (Sleek Black, No Cyan Glow!)
+                    else if (matName.Contains("M_AtlasEmissive") || matName.Contains("Emissive")) // Eyes (Sleek Black)
                     {
                         mat.SetColor(BaseColorHash, eyesColor);
                         mat.SetColor(ColorHash, eyesColor);
