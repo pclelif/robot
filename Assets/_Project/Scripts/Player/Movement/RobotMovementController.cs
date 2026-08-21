@@ -6,22 +6,22 @@ namespace Robot.Player.Movement
     public class RobotMovementController : MonoBehaviour
     {
         [Header("Movement Settings")]
-        [SerializeField] private float walkSpeed = 3.5f;
-        [SerializeField] private float runSpeed = 7.0f;
-        [SerializeField] private float rotationSpeed = 12.0f;
-        [SerializeField] private float acceleration = 10.0f;
+        [SerializeField] private float walkSpeed = 6.0f;
+        [SerializeField] private float runSpeed = 10.0f;
+        [SerializeField] private float rotationSpeed = 16.0f;
+        [SerializeField] private float acceleration = 35.0f;
 
         [Header("Gravity & Grounding")]
-        [SerializeField] private float gravity = -19.62f;
+        [SerializeField] private float gravity = -15.0f;
         [SerializeField] private float groundedGravity = -2.0f;
         [SerializeField] private Transform groundCheckPoint;
-        [SerializeField] private float groundCheckRadius = 0.25f;
-        [SerializeField] private LayerMask groundMask;
+        [SerializeField] private float groundCheckRadius = 0.4f;
+        [SerializeField] private LayerMask groundMask = ~0; // Default to all layers
 
         [Header("Camera Reference")]
         [SerializeField] private Transform cameraTransform;
 
-        // Public Properties for External / Mobile Controls
+        // Public Properties
         public Vector2 MovementInput { get; set; }
         public bool IsRunningInput { get; set; }
         public bool IsGrounded { get; private set; }
@@ -34,6 +34,7 @@ namespace Robot.Player.Movement
         // Internal Movement State
         private Vector3 verticalVelocity;
         private float currentSpeed;
+        private Vector3 moveDirection;
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
         private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
         private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
@@ -43,53 +44,148 @@ namespace Robot.Player.Movement
             characterController = GetComponent<CharacterController>();
             animator = GetComponentInChildren<Animator>();
 
+            if (animator != null)
+            {
+                animator.applyRootMotion = false; // Prevent root motion from trapping transform
+            }
+
+            EnsureCameraReference();
+            EnsureGroundFloorExists();
+        }
+
+        private void Start()
+        {
+            EnsureCameraReference();
+
+            // Safety check: position robot at y >= 0.1 if spawned below floor level
+            if (transform.position.y < -1f)
+            {
+                transform.position = new Vector3(transform.position.x, 0.1f, transform.position.z);
+            }
+        }
+
+        private void EnsureCameraReference()
+        {
             if (cameraTransform == null && Camera.main != null)
             {
                 cameraTransform = Camera.main.transform;
             }
         }
 
+        private void EnsureGroundFloorExists()
+        {
+            // If no floor collider exists in scene, create a default floor plane so robot never falls into void
+            Collider[] colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
+            bool hasFloor = false;
+            foreach (var col in colliders)
+            {
+                if (col.gameObject != gameObject && !col.transform.IsChildOf(transform))
+                {
+                    hasFloor = true;
+                    break;
+                }
+            }
+
+            if (!hasFloor)
+            {
+                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                floor.name = "Auto_Environment_Floor";
+                floor.transform.position = new Vector3(0f, 0f, 0f);
+                floor.transform.localScale = new Vector3(20f, 1f, 20f); // 200x200 floor plane
+
+                Renderer ren = floor.GetComponent<Renderer>();
+                if (ren != null)
+                {
+                    Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
+                    if (urpLit != null)
+                    {
+                        Material mat = new Material(urpLit);
+                        mat.color = new Color(0.25f, 0.28f, 0.32f); // Sleek slate gray floor
+                        ren.sharedMaterial = mat;
+                    }
+                }
+            }
+        }
+
         private void Update()
         {
+            EnsureCameraReference();
             HandleGrounding();
-            HandleMovementAndRotation();
-            HandleGravity();
+            HandleInputAndMovement();
             UpdateAnimator();
         }
 
         private void HandleGrounding()
         {
-            if (groundCheckPoint != null)
-            {
-                IsGrounded = Physics.CheckSphere(groundCheckPoint.position, groundCheckRadius, groundMask);
-            }
-            else
-            {
-                IsGrounded = characterController.isGrounded;
-            }
+            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
+            
+            // Check Raycast / SphereCast downward
+            bool rayGrounded = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, 0.35f, groundMask, QueryTriggerInteraction.Ignore);
+            IsGrounded = rayGrounded || characterController.isGrounded;
 
             if (IsGrounded && verticalVelocity.y < 0)
             {
                 verticalVelocity.y = groundedGravity;
             }
+            else
+            {
+                verticalVelocity.y += gravity * Time.deltaTime;
+                verticalVelocity.y = Mathf.Max(verticalVelocity.y, -15.0f); // Clamp downward velocity
+            }
         }
 
-        private void HandleMovementAndRotation()
+        private void HandleInputAndMovement()
         {
-            // Read input vector (WASD or Mobile Joystick)
-            Vector3 inputDir = new Vector3(MovementInput.x, 0f, MovementInput.y).normalized;
+            float h = MovementInput.x;
+            float v = MovementInput.y;
+            bool run = false;
 
-            // Handle keyboard input fallback if MovementInput is zero
-            if (inputDir.sqrMagnitude < 0.01f)
+            // Direct KeyCode checks for keyboard (W, A, S, D, Arrow keys, Shift)
+            try
             {
-                float h = Input.GetAxisRaw("Horizontal");
-                float v = Input.GetAxisRaw("Vertical");
-                inputDir = new Vector3(h, 0f, v).normalized;
-                
-                if (Input.GetKey(KeyCode.LeftShift))
+                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
+                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) v -= 1f;
+                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
+                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) h -= 1f;
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) run = true;
+            }
+            catch { }
+
+#if ENABLE_INPUT_SYSTEM
+            if (Mathf.Approximately(h, 0f) && Mathf.Approximately(v, 0f))
+            {
+                try
                 {
-                    IsRunningInput = true;
+                    var keyboard = UnityEngine.InputSystem.Keyboard.current;
+                    if (keyboard != null)
+                    {
+                        if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) v += 1f;
+                        if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) v -= 1f;
+                        if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) h += 1f;
+                        if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) h -= 1f;
+                        if (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed) run = true;
+                    }
                 }
+                catch { }
+            }
+#endif
+
+            if (Mathf.Approximately(h, 0f) && Mathf.Approximately(v, 0f))
+            {
+                try
+                {
+                    h = Input.GetAxisRaw("Horizontal");
+                    v = Input.GetAxisRaw("Vertical");
+                }
+                catch { }
+            }
+
+            IsRunningInput = run;
+
+            Vector3 inputDir = new Vector3(h, 0f, v);
+            if (inputDir.sqrMagnitude > 1.0f)
+            {
+                inputDir.Normalize();
             }
 
             bool isMoving = inputDir.sqrMagnitude > 0.01f;
@@ -99,34 +195,36 @@ namespace Robot.Player.Movement
 
             if (isMoving)
             {
-                // Calculate camera-relative movement direction
+                // Camera-relative movement calculation
                 Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
                 Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
                 camForward.y = 0f;
                 camRight.y = 0f;
-                camForward.Normalize();
-                camRight.Normalize();
 
-                Vector3 moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+                if (camForward.sqrMagnitude < 0.001f) camForward = Vector3.forward;
+                else camForward.Normalize();
 
-                // Move CharacterController
-                characterController.Move(moveDirection * (currentSpeed * Time.deltaTime));
+                if (camRight.sqrMagnitude < 0.001f) camRight = Vector3.right;
+                else camRight.Normalize();
 
-                // Smooth Rotation towards moveDirection
+                moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+
                 if (moveDirection.sqrMagnitude > 0.001f)
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
                     transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
                 }
             }
+            else
+            {
+                moveDirection = Vector3.zero;
+            }
+
+            // Execute single combined Move call per frame
+            Vector3 finalVelocity = (moveDirection * currentSpeed) + verticalVelocity;
+            characterController.Move(finalVelocity * Time.deltaTime);
 
             CurrentSpeedNormalized = targetSpeed > 0f ? (currentSpeed / runSpeed) : 0f;
-        }
-
-        private void HandleGravity()
-        {
-            verticalVelocity.y += gravity * Time.deltaTime;
-            characterController.Move(verticalVelocity * Time.deltaTime);
         }
 
         private void UpdateAnimator()
@@ -140,11 +238,9 @@ namespace Robot.Player.Movement
 
         private void OnDrawGizmosSelected()
         {
-            if (groundCheckPoint != null)
-            {
-                Gizmos.color = IsGrounded ? Color.green : Color.red;
-                Gizmos.DrawWireSphere(groundCheckPoint.position, groundCheckRadius);
-            }
+            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(checkPos, groundCheckRadius);
         }
     }
 }

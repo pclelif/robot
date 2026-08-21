@@ -242,10 +242,13 @@ GameObject:
   m_Component:
   - component: {fileID: 2634395073816603646}
   - component: {fileID: 2523697088536518650}
-  - component: {fileID: 2523697088536518644}
+  - component: {fileID: 2523697088536518645}
+  - component: {fileID: 2523697088536518646}
+  - component: {fileID: 2523697088536518647}
+  - component: {fileID: 2523697088536518648}
   m_Layer: 0
-  m_Name: RandomModularRobots_Prefab
-  m_TagString: Untagged
+  m_Name: RobotPlayer
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -293,7 +296,32 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2523697088536518644
+--- !u!143 &2523697088536518645
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3442035376595726660}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.8
+  m_Radius: 0.35
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &2523697088536518646
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -302,11 +330,49 @@ MonoBehaviour:
   m_GameObject: {fileID: 3442035376595726660}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 547a3a5865c201e42b933cbf702a40ba, type: 3}
+  m_Script: {fileID: 11500000, guid: 9a909fe2e4a5436bb381a654625139cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  materialNameToModify: M_Atlas2
-  materialToModify: {fileID: 2100000, guid: b155bbc5f87677d47a8fcce7466463d3, type: 2}
+  walkSpeed: 3.5
+  runSpeed: 7
+  rotationSpeed: 12
+  acceleration: 10
+  gravity: -19.62
+  groundedGravity: -2
+  groundCheckPoint: {fileID: 0}
+  groundCheckRadius: 0.25
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 1
+  cameraTransform: {fileID: 0}
+--- !u!114 &2523697088536518647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3442035376595726660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38a03e8916e6438d9697868769f009b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activeTheme: 0
+  targetRenderers: []
+--- !u!114 &2523697088536518648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3442035376595726660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a517bb2326b47ba8104e21112eefcec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  colorCustomizer: {fileID: 0}
+  changeColorKey: 99
 --- !u!1 &3631620796558273419
 GameObject:
   m_ObjectHideFlags: 0

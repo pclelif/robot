@@ -45,17 +45,25 @@ namespace Robot.UI.HUD
                 out Vector2 position
             );
 
-            position.x = (position.x / joystickBackground.sizeDelta.x);
-            position.y = (position.y / joystickBackground.sizeDelta.y);
+            float bgWidth = joystickBackground != null && joystickBackground.rect.width > 0 ? joystickBackground.rect.width : (joystickBackground != null && joystickBackground.sizeDelta.x > 0 ? joystickBackground.sizeDelta.x : 100f);
+            float bgHeight = joystickBackground != null && joystickBackground.rect.height > 0 ? joystickBackground.rect.height : (joystickBackground != null && joystickBackground.sizeDelta.y > 0 ? joystickBackground.sizeDelta.y : 100f);
 
-            InputVector = new Vector2(position.x * 2f, position.y * 2f);
-            InputVector = (InputVector.magnitude > 1.0f) ? InputVector.normalized : InputVector;
+            position.x = position.x / bgWidth;
+            position.y = position.y / bgHeight;
+
+            Vector2 calculatedInput = new Vector2(position.x * 2f, position.y * 2f);
+            if (float.IsNaN(calculatedInput.x) || float.IsNaN(calculatedInput.y))
+            {
+                calculatedInput = Vector2.zero;
+            }
+
+            InputVector = (calculatedInput.magnitude > 1.0f) ? calculatedInput.normalized : calculatedInput;
 
             if (joystickHandle != null)
             {
                 joystickHandle.anchoredPosition = new Vector2(
-                    InputVector.x * (joystickBackground.sizeDelta.x / 2f) * (handleRange / 100f),
-                    InputVector.y * (joystickBackground.sizeDelta.y / 2f) * (handleRange / 100f)
+                    InputVector.x * (bgWidth / 2f) * (handleRange / 100f),
+                    InputVector.y * (bgHeight / 2f) * (handleRange / 100f)
                 );
             }
 

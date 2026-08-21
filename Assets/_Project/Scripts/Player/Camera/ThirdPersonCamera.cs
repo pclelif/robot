@@ -64,9 +64,32 @@ namespace Robot.Player.CameraControl
 
         private void HandleInput()
         {
+            float mouseDeltaX = 0f;
+            float mouseDeltaY = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null)
+            {
+                Vector2 delta = mouse.delta.ReadValue();
+                mouseDeltaX = delta.x * 0.1f;
+                mouseDeltaY = delta.y * 0.1f;
+            }
+#endif
+
+            if (Mathf.Approximately(mouseDeltaX, 0f) && Mathf.Approximately(mouseDeltaY, 0f))
+            {
+                try
+                {
+                    mouseDeltaX = Input.GetAxis("Mouse X");
+                    mouseDeltaY = Input.GetAxis("Mouse Y");
+                }
+                catch { }
+            }
+
             // Read Mouse Input
-            float inputYaw = Input.GetAxis("Mouse X") * mouseSensitivityX;
-            float inputPitch = -Input.GetAxis("Mouse Y") * mouseSensitivityY;
+            float inputYaw = mouseDeltaX * mouseSensitivityX;
+            float inputPitch = -mouseDeltaY * mouseSensitivityY;
 
             // Add Mobile Touch Look Input
             inputYaw += MobileLookInput.x * touchSensitivity;
@@ -87,7 +110,7 @@ namespace Robot.Player.CameraControl
             Vector3 desiredCameraPos = focusPoint - (rotation * Vector3.forward * defaultDistance);
             Vector3 rayDirection = (desiredCameraPos - focusPoint).normalized;
 
-            if (Physics.SphereCast(focusPoint, sphereRadius, rayDirection, out RaycastHit hit, defaultDistance, obstacleLayers))
+            if (Physics.SphereCast(focusPoint, sphereRadius, rayDirection, out RaycastHit hit, defaultDistance, obstacleLayers, QueryTriggerInteraction.Ignore))
             {
                 targetDistance = Mathf.Clamp(hit.distance - sphereRadius, minDistance, maxDistance);
             }

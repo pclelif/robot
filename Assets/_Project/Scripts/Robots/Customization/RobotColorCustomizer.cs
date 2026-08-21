@@ -8,13 +8,19 @@ namespace Robot.Robots.Customization
     {
         public enum ColorTheme
         {
-            Red = 0,
-            Orange = 1,
-            Yellow = 2,
-            Green = 3,
-            Blue = 4,
-            Purple = 5,
-            Pink = 6
+            SteelBlue = 0,       // Sleek Matte Tech Blue
+            StealthCharcoal = 1, // Deep Matte Black / Carbon
+            CrimsonRed = 2,      // Rich Deep Red
+            EmeraldGreen = 3,    // Tactical Forest Green
+            CopperAmber = 4,     // Warm Burnt Copper
+            RoyalViolet = 5,     // Deep Satin Purple
+            CoralQuartz = 6      // Soft Rose Quartz
+        }
+
+        public enum EyeColorMode
+        {
+            SleekBlack = 0,      // Sleek Glossy Black Eyes
+            MatchTheme = 1       // Match Robot Body Theme Color
         }
 
         [Serializable]
@@ -22,39 +28,80 @@ namespace Robot.Robots.Customization
         {
             public ColorTheme theme;
             public string name;
-            public Color primaryColor;
-            public Color emissiveColor;
-            public Vector2 uvOffset;
+            public Color bodyColor;
+            public Color jointColor;
         }
 
         [Header("Configuration")]
-        [SerializeField] private ColorTheme activeTheme = ColorTheme.Red;
+        [SerializeField] private ColorTheme activeTheme = ColorTheme.SteelBlue;
+        [SerializeField] private EyeColorMode eyeMode = EyeColorMode.SleekBlack;
         [SerializeField] private List<Renderer> targetRenderers = new List<Renderer>();
 
-        [Header("Presets (Pandazole-Harmonized Multiplayer Colors)")]
+        [Header("Color Presets (Clean URP Shading - Solid Body, Non-Gray)")]
         [SerializeField]
         private ColorPreset[] presets = new ColorPreset[]
         {
-            new ColorPreset { theme = ColorTheme.Red, name = "Pandazole Kırmızı (Terracotta Red)", primaryColor = new Color(0.85f, 0.22f, 0.23f), emissiveColor = new Color(1.0f, 0.36f, 0.37f), uvOffset = Vector2.zero },
-            new ColorPreset { theme = ColorTheme.Orange, name = "Pandazole Turuncu (Warm Amber)", primaryColor = new Color(0.91f, 0.44f, 0.32f), emissiveColor = new Color(0.96f, 0.64f, 0.38f), uvOffset = new Vector2(0.205f, 0.03125f) },
-            new ColorPreset { theme = ColorTheme.Yellow, name = "Pandazole Sarı (Mustard Gold)", primaryColor = new Color(0.91f, 0.77f, 0.41f), emissiveColor = new Color(0.96f, 0.85f, 0.45f), uvOffset = new Vector2(0.41f, 0.0625f) },
-            new ColorPreset { theme = ColorTheme.Green, name = "Pandazole Yeşil (Meadow Green)", primaryColor = new Color(0.31f, 0.62f, 0.35f), emissiveColor = new Color(0.46f, 0.78f, 0.40f), uvOffset = new Vector2(0f, 0.09375f) },
-            new ColorPreset { theme = ColorTheme.Blue, name = "Pandazole Mavi (Coastal Teal/Blue)", primaryColor = new Color(0.20f, 0.58f, 0.68f), emissiveColor = new Color(0.30f, 0.78f, 0.88f), uvOffset = new Vector2(0.205f, 0.125f) },
-            new ColorPreset { theme = ColorTheme.Purple, name = "Pandazole Mor (Lowpoly Berry)", primaryColor = new Color(0.55f, 0.25f, 0.68f), emissiveColor = new Color(0.71f, 0.38f, 0.85f), uvOffset = new Vector2(0.41f, 0.15625f) },
-            new ColorPreset { theme = ColorTheme.Pink, name = "Pandazole Pembe (Coral Rose)", primaryColor = new Color(0.92f, 0.42f, 0.55f), emissiveColor = new Color(1.0f, 0.55f, 0.68f), uvOffset = new Vector2(0f, 0.1875f) }
+            new ColorPreset 
+            { 
+                theme = ColorTheme.SteelBlue, 
+                name = "Çelik Mavi (Tech Blue)", 
+                bodyColor = new Color(0.18f, 0.48f, 0.85f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.StealthCharcoal, 
+                name = "Karbon Siyah (Stealth Charcoal)", 
+                bodyColor = new Color(0.18f, 0.19f, 0.22f), 
+                jointColor = new Color(0.08f, 0.08f, 0.10f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.CrimsonRed, 
+                name = "Koyu Kırmızı (Deep Crimson)", 
+                bodyColor = new Color(0.82f, 0.15f, 0.18f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.EmeraldGreen, 
+                name = "Askeri Yeşil (Tactical Green)", 
+                bodyColor = new Color(0.20f, 0.65f, 0.32f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.CopperAmber, 
+                name = "Bakır Turuncu (Warm Copper)", 
+                bodyColor = new Color(0.88f, 0.42f, 0.15f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.RoyalViolet, 
+                name = "Asil Mor (Deep Purple)", 
+                bodyColor = new Color(0.55f, 0.20f, 0.78f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            },
+            new ColorPreset 
+            { 
+                theme = ColorTheme.CoralQuartz, 
+                name = "Gül Pembesi (Rose Quartz)", 
+                bodyColor = new Color(0.88f, 0.38f, 0.55f), 
+                jointColor = new Color(0.12f, 0.12f, 0.14f)
+            }
         };
 
-        private MaterialPropertyBlock propBlock;
         private static readonly int BaseColorHash = Shader.PropertyToID("_BaseColor");
         private static readonly int ColorHash = Shader.PropertyToID("_Color");
         private static readonly int EmissionColorHash = Shader.PropertyToID("_EmissionColor");
-        private static readonly int UvOffsetHash = Shader.PropertyToID("_UV_Offset");
+        private static readonly int SmoothnessHash = Shader.PropertyToID("_Smoothness");
+        private static readonly int MetallicHash = Shader.PropertyToID("_Metallic");
 
         public ColorTheme ActiveTheme => activeTheme;
 
         private void Awake()
         {
-            propBlock = new MaterialPropertyBlock();
             if (targetRenderers.Count == 0)
             {
                 GetComponentsInChildren(true, targetRenderers);
@@ -63,7 +110,30 @@ namespace Robot.Robots.Customization
 
         private void Start()
         {
+            EnsureUrpMaterials();
             ApplyTheme(activeTheme);
+        }
+
+        private void EnsureUrpMaterials()
+        {
+            Shader urpLitShader = Shader.Find("Universal Render Pipeline/Lit");
+            if (urpLitShader == null) urpLitShader = Shader.Find("Standard");
+
+            if (urpLitShader == null) return;
+
+            foreach (Renderer ren in targetRenderers)
+            {
+                if (ren == null) continue;
+
+                Material[] mats = ren.materials; // Access instance materials
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    if (mats[i] != null && mats[i].shader != urpLitShader)
+                    {
+                        mats[i].shader = urpLitShader;
+                    }
+                }
+            }
         }
 
         public void ApplyTheme(ColorTheme theme)
@@ -71,23 +141,45 @@ namespace Robot.Robots.Customization
             activeTheme = theme;
             ColorPreset preset = GetPreset(theme);
 
+            Color eyesColor = eyeMode == EyeColorMode.SleekBlack ? new Color(0.04f, 0.04f, 0.05f) : preset.bodyColor;
+
             foreach (Renderer ren in targetRenderers)
             {
                 if (ren == null) continue;
 
-                ren.GetPropertyBlock(propBlock);
-                propBlock.SetColor(BaseColorHash, preset.primaryColor);
-                propBlock.SetColor(ColorHash, preset.primaryColor);
-                propBlock.SetColor(EmissionColorHash, preset.emissiveColor);
-                propBlock.SetVector(UvOffsetHash, preset.uvOffset);
-                ren.SetPropertyBlock(propBlock);
-
-                // Also update instances if standard material property offsets are used
-                foreach (Material mat in ren.materials)
+                Material[] mats = ren.materials;
+                for (int i = 0; i < mats.Length; i++)
                 {
-                    if (mat.HasProperty("_UV_Offset"))
+                    Material mat = mats[i];
+                    if (mat == null) continue;
+
+                    string matName = mat.name;
+
+                    if (matName.Contains("M_AtlasOffset") || matName.Contains("Offset")) // Main Robot Armor & Body (Head, Chest, Arms, Legs)
                     {
-                        mat.SetVector("_UV_Offset", preset.uvOffset);
+                        mat.SetColor(BaseColorHash, preset.bodyColor);
+                        mat.SetColor(ColorHash, preset.bodyColor);
+                        if (mat.HasProperty(SmoothnessHash)) mat.SetFloat(SmoothnessHash, 0.35f);
+                        if (mat.HasProperty(MetallicHash)) mat.SetFloat(MetallicHash, 0.15f);
+                    }
+                    else if (matName.Contains("M_AtlasBase") || matName.Contains("Base")) // Joint Connections
+                    {
+                        mat.SetColor(BaseColorHash, preset.jointColor);
+                        mat.SetColor(ColorHash, preset.jointColor);
+                        if (mat.HasProperty(SmoothnessHash)) mat.SetFloat(SmoothnessHash, 0.5f);
+                        if (mat.HasProperty(MetallicHash)) mat.SetFloat(MetallicHash, 0.7f);
+                    }
+                    else if (matName.Contains("M_AtlasEmissive") || matName.Contains("Emissive")) // Eyes (Sleek Black, No Cyan Glow!)
+                    {
+                        mat.SetColor(BaseColorHash, eyesColor);
+                        mat.SetColor(ColorHash, eyesColor);
+                        if (mat.HasProperty(EmissionColorHash)) mat.SetColor(EmissionColorHash, Color.black);
+                        if (mat.HasProperty(SmoothnessHash)) mat.SetFloat(SmoothnessHash, 0.9f);
+                    }
+                    else
+                    {
+                        mat.SetColor(BaseColorHash, preset.bodyColor);
+                        mat.SetColor(ColorHash, preset.bodyColor);
                     }
                 }
             }
