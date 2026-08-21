@@ -6,7 +6,7 @@ namespace Robot.Player.CameraControl
 {
     /// <summary>
     /// Smooth 3rd-person orbital camera controlled by mouse for world exploration.
-    /// Maintains chest-level framing, zoom support, obstacle deocclusion, and camera-relative WASD controls.
+    /// Supports mouse look, zoom, obstacle deocclusion, and camera-relative WASD controls.
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
@@ -79,10 +79,8 @@ namespace Robot.Player.CameraControl
             AssignTarget();
             UpdatePivotTargetPosition();
 
-            // Toggle cursor lock with Mouse click or ESC key
             HandleCursorLocking();
 
-            // Read mouse look input if enabled and cursor is locked
             if (enableMouseLook)
             {
                 Vector2 lookDelta = GetLookDelta();
@@ -93,7 +91,6 @@ namespace Robot.Player.CameraControl
                 }
             }
 
-            // Mouse Scroll Zoom
             float scroll = GetZoomInput();
             if (Mathf.Abs(scroll) > 0.001f)
             {
@@ -126,16 +123,11 @@ namespace Robot.Player.CameraControl
 
         private void HandleCursorLocking()
         {
-            // Click inside game view to lock cursor
-            if (UnityEngine.InputSystem.Mouse.current != null &&
-                (UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame ||
-                 UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame))
+            if (UnityEngine.Input.GetMouseButtonDown(0) || UnityEngine.Input.GetMouseButtonDown(1))
             {
                 LockCursor();
             }
-            // Press ESC to unlock cursor
-            else if (UnityEngine.InputSystem.Keyboard.current != null &&
-                     UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+            else if (UnityEngine.Input.GetKeyDown(KeyCode.Escape))
             {
                 UnlockCursor();
             }
@@ -155,17 +147,17 @@ namespace Robot.Player.CameraControl
 
         private Vector2 GetLookDelta()
         {
+            float mouseX = UnityEngine.Input.GetAxis("Mouse X");
+            float mouseY = UnityEngine.Input.GetAxis("Mouse Y");
+
+            if (Mathf.Abs(mouseX) > 0.001f || Mathf.Abs(mouseY) > 0.001f)
+            {
+                return new Vector2(mouseX * 15f, mouseY * 15f);
+            }
+
             if (input != null && input.LookInput.sqrMagnitude > 0.0001f)
             {
                 return input.LookInput;
-            }
-
-            // Direct Mouse Delta fallback
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                float mouseX = UnityEngine.Input.GetAxisRaw("Mouse X");
-                float mouseY = UnityEngine.Input.GetAxisRaw("Mouse Y");
-                return new Vector2(mouseX * 10f, mouseY * 10f);
             }
 
             return Vector2.zero;
@@ -173,19 +165,24 @@ namespace Robot.Player.CameraControl
 
         private float GetZoomInput()
         {
+            float scroll = UnityEngine.Input.GetAxis("Mouse ScrollWheel");
+            if (Mathf.Abs(scroll) > 0.001f)
+            {
+                return scroll;
+            }
+
             if (input != null && Mathf.Abs(input.ZoomInput) > 0.001f)
             {
                 return input.ZoomInput;
             }
 
-            return UnityEngine.Input.GetAxis("Mouse ScrollWheel");
+            return 0f;
         }
 
         private void UpdatePivotTargetPosition()
         {
             if (cameraPivotTarget != null && target != null)
             {
-                // Position tracks robot chest height, rotation stays world-aligned (identity)
                 cameraPivotTarget.position = target.position + targetOffset;
                 cameraPivotTarget.rotation = Quaternion.identity;
             }
