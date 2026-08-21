@@ -1,32 +1,68 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using Robot.Input;
 
 namespace Robot.Player.CameraControl
 {
     /// <summary>
-    /// Fixed-orientation 3rd-person camera that stays behind and above the robot at a natural exploration angle (15° pitch, 5m distance, 1.2m chest height).
-    /// Mouse look is completely disabled to preserve rock-solid camera stability.
+    /// Professional Third-Person Camera Controller implementing full specification:
+    /// - Smooth position follow (no rigid camera snapping)
+    /// - Responsive, smooth mouse orbit (yaw & pitch)
+    /// - Camera-relative movement support
+    /// - Smooth auto-aligning behind player movement heading when walking
+    /// - Obstacle deocclusion & consistent framing (15° default pitch, 5m distance, 1.2m target offset)
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
     {
-        [Header("Target & Offset")]
+        [Header("Target & Framing Offset")]
         [SerializeField] private Transform target;
         [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.2f, 0f);
 
-        [Header("Distance & Pitch Angle")]
+        [Header("Distance & Zoom")]
         [SerializeField, Min(0.5f)] private float defaultDistance = 5.0f;
+        [SerializeField, Min(0.5f)] private float minDistance = 2.0f;
+        [SerializeField, Min(0.5f)] private float maxDistance = 10.0f;
+        [SerializeField, Min(0.1f)] private float zoomSpeed = 2.0f;
+
+        [Header("Pitch Limits")]
         [SerializeField] private float defaultPitch = 15.0f;
-        [SerializeField] private float defaultYaw = 0.0f;
+        [SerializeField] private float minPitch = -10.0f;
+        [SerializeField] private float maxPitch = 60.0f;
+
+        [Header("Mouse Orbit Sensitivity")]
+        [SerializeField] private bool enableMouseLook = true;
+        [SerializeField, Min(0.01f)] private float mouseSensitivity = 0.15f;
+
+        [Header("Smooth Damping Times")]
+        [SerializeField, Min(0.01f)] private float positionDamping = 0.08f;
+        [SerializeField, Min(0.01f)] private float rotationDamping = 0.06f;
+
+        [Header("Auto-Align Behind Player")]
+        [SerializeField] private bool enableAutoAlign = true;
+        [SerializeField, Min(0.1f)] private float autoAlignDelay = 0.4f;
+        [SerializeField, Min(0.01f)] private float autoAlignDamping = 0.35f;
 
         private CinemachineCamera virtualCamera;
         private CinemachineOrbitalFollow orbitalFollow;
         private CinemachineDeoccluder deoccluder;
+        private PlayerInputReader input;
 
         private Transform cameraPivotTarget;
-        private float yaw;
-        private float pitch;
+        private Vector3 currentPivotPosition;
+        private Vector3 positionVelocity;
+
+        private float targetYaw;
+        private float currentYaw;
+        private float yawVelocity;
+
+        private float targetPitch;
+        private float currentPitch;
+        private float pitchVelocity;
+
         private float distance;
+        private float autoAlignVelocity;
+        private float lastMouseInputTime;
 
         private void Awake()
         {
@@ -35,46 +71,114 @@ namespace Robot.Player.CameraControl
             deoccluder = GetComponent<CinemachineDeoccluder>();
 
             distance = defaultDistance;
-            pitch = defaultPitch;
-            yaw = defaultYaw;
+            targetPitch = defaultPitch;
+            currentPitch = defaultPitch;
 
-            // Ensure cursor is unlocked and visible
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
+            ResolveInput();
             ConfigureDeoccluderAndOrbital();
         }
 
         private void Start()
         {
+            ResolveInput();
             AssignTarget();
             ConfigureDeoccluderAndOrbital();
+
+            if (target != null)
+            {
+                targetYaw = target.eulerAngles.y;
+                currentYaw = targetYaw;
+                currentPivotPosition = target.position + targetOffset;
+            }
+
             ApplyOrbit();
         }
 
         private void LateUpdate()
         {
+            ResolveInput();
             AssignTarget();
-            UpdatePivotTargetPosition();
+            if (target == null) return;
+
+            UpdateSmoothPivotPosition();
+            HandleMouseLookAndAutoAlign();
+            HandleZoom();
             ApplyOrbit();
         }
 
         public void SetTarget(Transform value)
         {
             target = value;
+            ResolveInput();
             AssignTarget();
             ConfigureDeoccluderAndOrbital();
+
+            if (target != null)
+            {
+                targetYaw = target.eulerAngles.y;
+                currentYaw = targetYaw;
+                currentPivotPosition = target.position + targetOffset;
+            }
+
             ApplyOrbit();
         }
 
-        private void UpdatePivotTargetPosition()
+        private void ResolveInput()
         {
-            if (cameraPivotTarget != null && target != null)
+            if (input == null && target != null)
             {
-                // Position tracks robot chest height, rotation stays world-aligned (identity)
-                // so the camera does NOT spin when the robot turns!
-                cameraPivotTarget.position = target.position + targetOffset;
-                cameraPivotTarget.rotation = Quaternion.identity;
+                input = target.GetComponent<PlayerInputReader>();
+            }
+        }
+
+        private void UpdateSmoothPivotPosition()
+        {
+            if (cameraPivotTarget == null || target == null) return;
+
+            Vector3 desiredPivotPosition = target.position + targetOffset;
+            currentPivotPosition = Vector3.SmoothDamp(currentPivotPosition, desiredPivotPosition, ref positionVelocity, positionDamping);
+
+            cameraPivotTarget.position = currentPivotPosition;
+            cameraPivotTarget.rotation = Quaternion.identity;
+        }
+
+        private void HandleMouseLookAndAutoAlign()
+        {
+            float mouseX = UnityEngine.Input.GetAxis("Mouse X");
+            float mouseY = UnityEngine.Input.GetAxis("Mouse Y");
+
+            bool hasMouseInput = enableMouseLook && (Mathf.Abs(mouseX) > 0.0001f || Mathf.Abs(mouseY) > 0.0001f);
+            bool isMoving = input != null && input.MoveInput.sqrMagnitude > 0.01f;
+
+            if (hasMouseInput)
+            {
+                lastMouseInputTime = Time.time;
+                targetYaw += mouseX * mouseSensitivity * 10f;
+                targetPitch = Mathf.Clamp(targetPitch - mouseY * mouseSensitivity * 10f, minPitch, maxPitch);
+            }
+            else if (enableAutoAlign && isMoving && (Time.time - lastMouseInputTime > autoAlignDelay))
+            {
+                // Smoothly align camera behind character movement direction when walking
+                float playerHeading = target.eulerAngles.y;
+                targetYaw = Mathf.SmoothDampAngle(targetYaw, playerHeading, ref autoAlignVelocity, autoAlignDamping);
+            }
+
+            // Smooth interpolation for camera rotation angles
+            currentYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref yawVelocity, rotationDamping);
+            currentPitch = Mathf.SmoothDampAngle(currentPitch, targetPitch, ref pitchVelocity, rotationDamping);
+        }
+
+        private void HandleZoom()
+        {
+            float scroll = UnityEngine.Input.GetAxis("Mouse ScrollWheel");
+            if (input != null && Mathf.Abs(input.ZoomInput) > 0.001f)
+            {
+                scroll = input.ZoomInput;
+            }
+
+            if (Mathf.Abs(scroll) > 0.001f)
+            {
+                distance = Mathf.Clamp(distance - scroll * zoomSpeed, minDistance, maxDistance);
             }
         }
 
@@ -91,8 +195,6 @@ namespace Robot.Player.CameraControl
                 }
                 cameraPivotTarget = pivotGo.transform;
             }
-
-            UpdatePivotTargetPosition();
 
             if (virtualCamera.Follow != cameraPivotTarget) virtualCamera.Follow = cameraPivotTarget;
             if (virtualCamera.LookAt != cameraPivotTarget) virtualCamera.LookAt = cameraPivotTarget;
@@ -123,13 +225,13 @@ namespace Robot.Player.CameraControl
             orbitalFollow.TargetOffset = Vector3.zero;
             orbitalFollow.Radius = distance;
 
-            orbitalFollow.HorizontalAxis.Value = yaw;
+            orbitalFollow.HorizontalAxis.Value = currentYaw;
             orbitalFollow.HorizontalAxis.Wrap = true;
             orbitalFollow.HorizontalAxis.Range = new Vector2(-180f, 180f);
 
-            orbitalFollow.VerticalAxis.Value = pitch;
+            orbitalFollow.VerticalAxis.Value = currentPitch;
             orbitalFollow.VerticalAxis.Wrap = false;
-            orbitalFollow.VerticalAxis.Range = new Vector2(-89f, 89f);
+            orbitalFollow.VerticalAxis.Range = new Vector2(minPitch, maxPitch);
         }
     }
 }
