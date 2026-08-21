@@ -89,7 +89,7 @@ namespace Robot.UI.HUD
             GUILayout.Label("🎨 <b>'C' Tuşu:</b> Renk Değiştir");
             GUILayout.Space(12);
 
-            string activeThemeName = colorCustomizer != null ? colorCustomizer.ActiveTheme.ToString() : "Yükleniyor...";
+            string activeThemeName = colorCustomizer != null ? colorCustomizer.ActiveThemeName : "Yükleniyor...";
             GUILayout.Label($"<b>Aktif Renk Teması:</b> <color=cyan>{activeThemeName}</color>", GetBodyStyle());
             GUILayout.Space(10);
 

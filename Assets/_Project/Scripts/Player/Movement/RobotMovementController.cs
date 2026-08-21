@@ -8,14 +8,18 @@ namespace Robot.Player.Movement
         [Header("Movement Settings")]
         [SerializeField] private float walkSpeed = 6.0f;
         [SerializeField] private float runSpeed = 10.0f;
-        [SerializeField] private float rotationSpeed = 15.0f;
-        [SerializeField] private float acceleration = 15.0f;
+        [SerializeField] private float rotationSpeed = 18.0f;
+        [SerializeField] private float acceleration = 35.0f;
 
         [Header("Gravity & Grounding")]
-        [SerializeField] private float gravity = -9.81f;
+        [SerializeField] private float gravity = -15.0f;
+        [SerializeField] private float groundedGravity = -2.0f;
         [SerializeField] private Transform groundCheckPoint;
-        [SerializeField] private float groundCheckRadius = 0.2f;
-        [SerializeField] private LayerMask groundMask = ~0;
+        [SerializeField] private float groundCheckRadius = 0.4f;
+        [SerializeField] private LayerMask groundMask = ~0; // Default to all layers
+
+        [Header("Camera Reference")]
+        [SerializeField] private Transform cameraTransform;
 
         // Public Properties
         public Vector2 MovementInput { get; set; }
@@ -28,7 +32,7 @@ namespace Robot.Player.Movement
         private Animator animator;
 
         // Internal Movement State
-        private float verticalVelocity;
+        private Vector3 verticalVelocity;
         private float currentSpeed;
         private Vector3 moveDirection;
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -42,22 +46,35 @@ namespace Robot.Player.Movement
 
             if (animator != null)
             {
-                animator.applyRootMotion = false;
+                animator.applyRootMotion = false; // Prevent animator root motion from locking position
             }
 
+            EnsureCameraReference();
             EnsureGroundFloorExists();
         }
 
         private void Start()
         {
+            EnsureCameraReference();
+
+            // Position robot safely above ground level at Start
             if (transform.position.y < 0.1f)
             {
-                transform.position = new Vector3(transform.position.x, 0.5f, transform.position.z);
+                transform.position = new Vector3(transform.position.x, 0.15f, transform.position.z);
+            }
+        }
+
+        private void EnsureCameraReference()
+        {
+            if (cameraTransform == null && Camera.main != null)
+            {
+                cameraTransform = Camera.main.transform;
             }
         }
 
         private void EnsureGroundFloorExists()
         {
+            // If no floor collider exists in scene, create a default floor plane
             Collider[] colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
             bool hasFloor = false;
             foreach (var col in colliders)
@@ -74,7 +91,7 @@ namespace Robot.Player.Movement
                 GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 floor.name = "Auto_Environment_Floor";
                 floor.transform.position = new Vector3(0f, 0f, 0f);
-                floor.transform.localScale = new Vector3(20f, 1f, 20f);
+                floor.transform.localScale = new Vector3(20f, 1f, 20f); // 200x200 floor plane
 
                 Renderer ren = floor.GetComponent<Renderer>();
                 if (ren != null)
@@ -83,7 +100,7 @@ namespace Robot.Player.Movement
                     if (urpLit != null)
                     {
                         Material mat = new Material(urpLit);
-                        mat.color = new Color(0.25f, 0.28f, 0.32f);
+                        mat.color = new Color(0.25f, 0.28f, 0.32f); // Slate gray floor
                         ren.sharedMaterial = mat;
                     }
                 }
@@ -92,6 +109,7 @@ namespace Robot.Player.Movement
 
         private void Update()
         {
+            EnsureCameraReference();
             HandleGrounding();
             HandleInputAndMovement();
             UpdateAnimator();
@@ -99,18 +117,19 @@ namespace Robot.Player.Movement
 
         private void HandleGrounding()
         {
-            // CharacterController'ın kendi yerleşik zemin kontrolü en güvenilirleşmiş yoldur
-            IsGrounded = characterController.isGrounded;
+            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
+            
+            bool rayGrounded = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, 0.4f, groundMask, QueryTriggerInteraction.Ignore);
+            IsGrounded = rayGrounded || characterController.isGrounded;
 
-            if (IsGrounded)
+            if (IsGrounded && verticalVelocity.y < 0)
             {
-                // Yerdeyken hafifçe aşağı bas ki havada süzülmesin
-                verticalVelocity = -2f;
+                verticalVelocity.y = groundedGravity;
             }
             else
             {
-                // Havadayken yerçekimi uygula
-                verticalVelocity += gravity * Time.deltaTime;
+                verticalVelocity.y += gravity * Time.deltaTime;
+                verticalVelocity.y = Mathf.Max(verticalVelocity.y, -15.0f); // Clamp downward velocity
             }
         }
 
@@ -120,6 +139,7 @@ namespace Robot.Player.Movement
             float v = MovementInput.y;
             bool run = false;
 
+            // Direct KeyCode checks (W = Screen UP, S = Screen DOWN, D = Screen RIGHT, A = Screen LEFT)
             try
             {
                 if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
@@ -174,18 +194,38 @@ namespace Robot.Player.Movement
 
             if (isMoving)
             {
-                moveDirection = new Vector3(inputDir.x, 0f, inputDir.z).normalized;
+                // Align movement 100% with camera screen orientation:
+                // W = UP on screen (camForward)
+                // S = DOWN on screen (-camForward)
+                // D = RIGHT on screen (camRight)
+                // A = LEFT on screen (-camRight)
+                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
+                Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
+                camForward.y = 0f;
+                camRight.y = 0f;
 
-                if (moveDirection != Vector3.zero)
+                if (camForward.sqrMagnitude < 0.001f) camForward = Vector3.forward;
+                else camForward.Normalize();
+
+                if (camRight.sqrMagnitude < 0.001f) camRight = Vector3.right;
+                else camRight.Normalize();
+
+                moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+
+                if (moveDirection.sqrMagnitude > 0.001f)
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
                     transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
                 }
             }
+            else
+            {
+                moveDirection = Vector3.zero;
+            }
 
-            // Hareketi doğrudan yatay yön ve düşey hız (yerçekimi) olarak birleştir
-            Vector3 finalMove = (moveDirection * currentSpeed) + (Vector3.up * verticalVelocity);
-            characterController.Move(finalMove * Time.deltaTime);
+            // Single combined CharacterController.Move call per frame
+            Vector3 finalVelocity = (moveDirection * currentSpeed) + verticalVelocity;
+            characterController.Move(finalVelocity * Time.deltaTime);
 
             CurrentSpeedNormalized = targetSpeed > 0f ? (currentSpeed / runSpeed) : 0f;
         }
