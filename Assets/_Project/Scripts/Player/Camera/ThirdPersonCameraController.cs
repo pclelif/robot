@@ -1,11 +1,12 @@
 using Unity.Cinemachine;
 using UnityEngine;
+using Robot.Input;
 
 namespace Robot.Player.CameraControl
 {
     /// <summary>
-    /// Fixed-orientation 3rd-person camera that follows the robot's position without spinning when the robot rotates.
-    /// Preserves perfect camera framing and natural WASD character turning.
+    /// Smooth 3rd-person orbital camera controlled by mouse for world exploration.
+    /// Maintains chest-level framing, zoom support, obstacle deocclusion, and camera-relative WASD controls.
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
@@ -14,14 +15,28 @@ namespace Robot.Player.CameraControl
         [SerializeField] private Transform target;
         [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.2f, 0f);
 
-        [Header("Distance & Pitch Angle")]
+        [Header("Distance & Zoom")]
         [SerializeField, Min(0.5f)] private float defaultDistance = 5.0f;
+        [SerializeField, Min(0.5f)] private float minDistance = 2.5f;
+        [SerializeField, Min(0.5f)] private float maxDistance = 10.0f;
+        [SerializeField, Min(0.1f)] private float zoomSpeed = 2.0f;
+
+        [Header("Pitch & Yaw Limits")]
         [SerializeField] private float defaultPitch = 15.0f;
-        [SerializeField] private float defaultYaw = 0.0f;
+        [SerializeField] private float minVerticalAngle = -10.0f;
+        [SerializeField] private float maxVerticalAngle = 60.0f;
+
+        [Header("Mouse Sensitivity")]
+        [SerializeField] private bool enableMouseLook = true;
+        [SerializeField, Min(0.01f)] private float mouseLookSensitivity = 0.15f;
+
+        [Header("Cursor Lock")]
+        [SerializeField] private bool lockCursorOnStart = true;
 
         private CinemachineCamera virtualCamera;
         private CinemachineOrbitalFollow orbitalFollow;
         private CinemachineDeoccluder deoccluder;
+        private PlayerInputReader input;
 
         private Transform cameraPivotTarget;
         private float yaw;
@@ -36,38 +51,141 @@ namespace Robot.Player.CameraControl
 
             distance = defaultDistance;
             pitch = defaultPitch;
-            yaw = defaultYaw;
+            ResolveInput();
             ConfigureDeoccluderAndOrbital();
         }
 
         private void Start()
         {
+            if (lockCursorOnStart)
+            {
+                LockCursor();
+            }
+
+            ResolveInput();
             AssignTarget();
             ConfigureDeoccluderAndOrbital();
+
+            if (target != null)
+            {
+                yaw = target.eulerAngles.y;
+            }
             ApplyOrbit();
         }
 
         private void LateUpdate()
         {
+            ResolveInput();
             AssignTarget();
             UpdatePivotTargetPosition();
+
+            // Toggle cursor lock with Mouse click or ESC key
+            HandleCursorLocking();
+
+            // Read mouse look input if enabled and cursor is locked
+            if (enableMouseLook)
+            {
+                Vector2 lookDelta = GetLookDelta();
+                if (lookDelta.sqrMagnitude > 0.0001f)
+                {
+                    yaw += lookDelta.x * mouseLookSensitivity;
+                    pitch = Mathf.Clamp(pitch - lookDelta.y * mouseLookSensitivity, minVerticalAngle, maxVerticalAngle);
+                }
+            }
+
+            // Mouse Scroll Zoom
+            float scroll = GetZoomInput();
+            if (Mathf.Abs(scroll) > 0.001f)
+            {
+                distance = Mathf.Clamp(distance - scroll * zoomSpeed, minDistance, maxDistance);
+            }
+
             ApplyOrbit();
         }
 
         public void SetTarget(Transform value)
         {
             target = value;
+            ResolveInput();
             AssignTarget();
             ConfigureDeoccluderAndOrbital();
+            if (target != null)
+            {
+                yaw = target.eulerAngles.y;
+            }
             ApplyOrbit();
+        }
+
+        private void ResolveInput()
+        {
+            if (input == null && target != null)
+            {
+                input = target.GetComponent<PlayerInputReader>();
+            }
+        }
+
+        private void HandleCursorLocking()
+        {
+            // Click inside game view to lock cursor
+            if (UnityEngine.InputSystem.Mouse.current != null &&
+                (UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame ||
+                 UnityEngine.InputSystem.Mouse.current.rightButton.wasPressedThisFrame))
+            {
+                LockCursor();
+            }
+            // Press ESC to unlock cursor
+            else if (UnityEngine.InputSystem.Keyboard.current != null &&
+                     UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                UnlockCursor();
+            }
+        }
+
+        private static void LockCursor()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        private static void UnlockCursor()
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
+        private Vector2 GetLookDelta()
+        {
+            if (input != null && input.LookInput.sqrMagnitude > 0.0001f)
+            {
+                return input.LookInput;
+            }
+
+            // Direct Mouse Delta fallback
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                float mouseX = UnityEngine.Input.GetAxisRaw("Mouse X");
+                float mouseY = UnityEngine.Input.GetAxisRaw("Mouse Y");
+                return new Vector2(mouseX * 10f, mouseY * 10f);
+            }
+
+            return Vector2.zero;
+        }
+
+        private float GetZoomInput()
+        {
+            if (input != null && Mathf.Abs(input.ZoomInput) > 0.001f)
+            {
+                return input.ZoomInput;
+            }
+
+            return UnityEngine.Input.GetAxis("Mouse ScrollWheel");
         }
 
         private void UpdatePivotTargetPosition()
         {
             if (cameraPivotTarget != null && target != null)
             {
-                // Position tracks robot chest height, but rotation stays world-aligned (identity)
-                // so the camera does NOT spin when the robot turns!
+                // Position tracks robot chest height, rotation stays world-aligned (identity)
                 cameraPivotTarget.position = target.position + targetOffset;
                 cameraPivotTarget.rotation = Quaternion.identity;
             }
@@ -124,7 +242,7 @@ namespace Robot.Player.CameraControl
 
             orbitalFollow.VerticalAxis.Value = pitch;
             orbitalFollow.VerticalAxis.Wrap = false;
-            orbitalFollow.VerticalAxis.Range = new Vector2(-89f, 89f);
+            orbitalFollow.VerticalAxis.Range = new Vector2(minVerticalAngle, maxVerticalAngle);
         }
     }
 }
