@@ -246,6 +246,8 @@ GameObject:
   - component: {fileID: 2523697088536518646}
   - component: {fileID: 2523697088536518647}
   - component: {fileID: 2523697088536518648}
+  - component: {fileID: 2523697088536518649}
+  - component: {fileID: 2523697088536518651}
   m_Layer: 0
   m_Name: RobotPlayer
   m_TagString: Player
@@ -331,12 +333,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9a909fe2e4a5436bb381a654625139cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   walkSpeed: 3.5
   runSpeed: 7
-  rotationSpeed: 12
-  acceleration: 10
+  rotationSpeed: 720
+  acceleration: 20
   gravity: -19.62
   groundedGravity: -2
   groundCheckPoint: {fileID: 0}
@@ -355,8 +357,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 38a03e8916e6438d9697868769f009b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   activeTheme: 0
   targetRenderers: []
 --- !u!114 &2523697088536518648
@@ -373,6 +375,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorCustomizer: {fileID: 0}
   changeColorKey: 99
+--- !u!114 &2523697088536518649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3442035376595726660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98bdf3befec4aa2ad71b05535037dbb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  actions: {fileID: 11400000, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+--- !u!114 &2523697088536518651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3442035376595726660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ece5a87a09ca4633a74d958d7e5bcc5f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  speedDampTime: 0.1
 --- !u!1 &3631620796558273419
 GameObject:
   m_ObjectHideFlags: 0

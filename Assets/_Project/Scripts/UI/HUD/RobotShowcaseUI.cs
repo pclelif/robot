@@ -58,7 +58,7 @@ namespace Robot.UI.HUD
             // 1. Direct legacy KeyCode.C check
             try
             {
-                if (Input.GetKeyDown(KeyCode.C)) return true;
+                if (UnityEngine.Input.GetKeyDown(KeyCode.C)) return true;
             }
             catch { }
 

@@ -1,13 +1,12 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Robot.Player.CameraControl;
+using Robot.Input;
 
 namespace Robot.UI.HUD
 {
     public class MobileTouchLook : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler
     {
-        [Header("Target Camera")]
-        [SerializeField] private ThirdPersonCamera targetCamera;
+        [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private float touchSensitivity = 1.0f;
 
         private Vector2 previousPointerPosition;
@@ -15,11 +14,9 @@ namespace Robot.UI.HUD
 
         private void Start()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = FindFirstObjectByType<ThirdPersonCamera>();
-            }
         }
+
+        public void Configure(PlayerInputReader reader) => inputReader = reader;
 
         public void OnPointerDown(PointerEventData eventData)
         {
@@ -34,18 +31,18 @@ namespace Robot.UI.HUD
             Vector2 delta = eventData.position - previousPointerPosition;
             previousPointerPosition = eventData.position;
 
-            if (targetCamera != null)
+            if (inputReader != null)
             {
-                targetCamera.MobileLookInput = delta * touchSensitivity;
+                inputReader.SetMobileLook(delta * touchSensitivity);
             }
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
             isDragging = false;
-            if (targetCamera != null)
+            if (inputReader != null)
             {
-                targetCamera.MobileLookInput = Vector2.zero;
+                inputReader.SetMobileLook(Vector2.zero);
             }
         }
     }

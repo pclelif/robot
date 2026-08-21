@@ -1,249 +1,125 @@
 using UnityEngine;
+using Robot.Input;
 
 namespace Robot.Player.Movement
 {
-    [RequireComponent(typeof(CharacterController))]
-    public class RobotMovementController : MonoBehaviour
+    /// <summary>
+    /// Handles camera-relative movement and character rotation facing the movement direction.
+    /// Ensures cameraTransform ALWAYS points to the view camera, never to the player transform itself.
+    /// </summary>
+    [RequireComponent(typeof(CharacterController), typeof(PlayerInputReader))]
+    public sealed class RobotMovementController : MonoBehaviour
     {
-        [Header("Movement Settings")]
-        [SerializeField] private float walkSpeed = 6.0f;
-        [SerializeField] private float runSpeed = 10.0f;
-        [SerializeField] private float rotationSpeed = 18.0f;
-        [SerializeField] private float acceleration = 35.0f;
-
-        [Header("Gravity & Grounding")]
-        [SerializeField] private float gravity = -15.0f;
-        [SerializeField] private float groundedGravity = -2.0f;
-        [SerializeField] private Transform groundCheckPoint;
-        [SerializeField] private float groundCheckRadius = 0.4f;
-        [SerializeField] private LayerMask groundMask = ~0; // Default to all layers
-
-        [Header("Camera Reference")]
         [SerializeField] private Transform cameraTransform;
 
-        // Public Properties
-        public Vector2 MovementInput { get; set; }
-        public bool IsRunningInput { get; set; }
+        [Header("Locomotion Speed")]
+        [SerializeField, Min(0f)] private float walkSpeed = 3.5f;
+        [SerializeField, Min(0f)] private float runSpeed = 6.0f;
+        [SerializeField, Min(0f)] private float acceleration = 20.0f;
+        [SerializeField, Min(0f)] private float rotationSpeed = 720.0f;
+
+        [Header("Model Facing Offset")]
+        [SerializeField] private float modelFacingOffsetDegrees = 0f;
+
+        [Header("Gravity and Jump")]
+        [SerializeField] private float gravity = -20.0f;
+        [SerializeField] private float groundedVerticalVelocity = -2.0f;
+        [SerializeField, Min(0f)] private float jumpHeight = 1.2f;
+
+        private CharacterController controller;
+        private PlayerInputReader input;
+        private float verticalVelocity;
+        private float currentSpeed;
+
         public bool IsGrounded { get; private set; }
         public float CurrentSpeedNormalized { get; private set; }
 
-        // Component References
-        private CharacterController characterController;
-        private Animator animator;
-
-        // Internal Movement State
-        private Vector3 verticalVelocity;
-        private float currentSpeed;
-        private Vector3 moveDirection;
-        private static readonly int SpeedHash = Animator.StringToHash("Speed");
-        private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
-        private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
-
         private void Awake()
         {
-            characterController = GetComponent<CharacterController>();
-            animator = GetComponentInChildren<Animator>();
-
-            if (animator != null)
-            {
-                animator.applyRootMotion = false; // Prevent animator root motion from locking position
-            }
-
-            EnsureCameraReference();
-            EnsureGroundFloorExists();
+            controller = GetComponent<CharacterController>();
+            input = GetComponent<PlayerInputReader>();
         }
 
         private void Start()
         {
             EnsureCameraReference();
-
-            // Position robot safely above ground level at Start
-            if (transform.position.y < 0.1f)
-            {
-                transform.position = new Vector3(transform.position.x, 0.15f, transform.position.z);
-            }
-        }
-
-        private void EnsureCameraReference()
-        {
-            if (cameraTransform == null && Camera.main != null)
-            {
-                cameraTransform = Camera.main.transform;
-            }
-        }
-
-        private void EnsureGroundFloorExists()
-        {
-            // If no floor collider exists in scene, create a default floor plane
-            Collider[] colliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
-            bool hasFloor = false;
-            foreach (var col in colliders)
-            {
-                if (col.gameObject != gameObject && !col.transform.IsChildOf(transform))
-                {
-                    hasFloor = true;
-                    break;
-                }
-            }
-
-            if (!hasFloor)
-            {
-                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                floor.name = "Auto_Environment_Floor";
-                floor.transform.position = new Vector3(0f, 0f, 0f);
-                floor.transform.localScale = new Vector3(20f, 1f, 20f); // 200x200 floor plane
-
-                Renderer ren = floor.GetComponent<Renderer>();
-                if (ren != null)
-                {
-                    Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
-                    if (urpLit != null)
-                    {
-                        Material mat = new Material(urpLit);
-                        mat.color = new Color(0.25f, 0.28f, 0.32f); // Slate gray floor
-                        ren.sharedMaterial = mat;
-                    }
-                }
-            }
         }
 
         private void Update()
         {
             EnsureCameraReference();
-            HandleGrounding();
-            HandleInputAndMovement();
-            UpdateAnimator();
+            UpdateVerticalVelocity();
+            Move();
         }
 
-        private void HandleGrounding()
+        public void SetCameraTransform(Transform value)
         {
-            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
-            
-            bool rayGrounded = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down, 0.4f, groundMask, QueryTriggerInteraction.Ignore);
-            IsGrounded = rayGrounded || characterController.isGrounded;
-
-            if (IsGrounded && verticalVelocity.y < 0)
+            if (value != null && value != transform && !value.IsChildOf(transform))
             {
-                verticalVelocity.y = groundedGravity;
-            }
-            else
-            {
-                verticalVelocity.y += gravity * Time.deltaTime;
-                verticalVelocity.y = Mathf.Max(verticalVelocity.y, -15.0f); // Clamp downward velocity
+                cameraTransform = value;
             }
         }
 
-        private void HandleInputAndMovement()
+        private void EnsureCameraReference()
         {
-            float h = MovementInput.x;
-            float v = MovementInput.y;
-            bool run = false;
-
-            // Direct KeyCode checks (W = Screen UP, S = Screen DOWN, D = Screen RIGHT, A = Screen LEFT)
-            try
+            // If cameraTransform is missing or accidentally linked to the player itself, override to Main Camera
+            if (cameraTransform == null || cameraTransform == transform || cameraTransform.IsChildOf(transform))
             {
-                if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) v += 1f;
-                if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) v -= 1f;
-                if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
-                if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) h -= 1f;
-                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) run = true;
-            }
-            catch { }
-
-#if ENABLE_INPUT_SYSTEM
-            if (Mathf.Approximately(h, 0f) && Mathf.Approximately(v, 0f))
-            {
-                try
+                if (Camera.main != null)
                 {
-                    var keyboard = UnityEngine.InputSystem.Keyboard.current;
-                    if (keyboard != null)
-                    {
-                        if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) v += 1f;
-                        if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) v -= 1f;
-                        if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) h += 1f;
-                        if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) h -= 1f;
-                        if (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed) run = true;
-                    }
+                    cameraTransform = Camera.main.transform;
                 }
-                catch { }
             }
-#endif
+        }
 
-            if (Mathf.Approximately(h, 0f) && Mathf.Approximately(v, 0f))
+        private void UpdateVerticalVelocity()
+        {
+            IsGrounded = controller.isGrounded;
+            if (IsGrounded && verticalVelocity < 0f)
             {
-                try
-                {
-                    h = Input.GetAxisRaw("Horizontal");
-                    v = Input.GetAxisRaw("Vertical");
-                }
-                catch { }
+                verticalVelocity = groundedVerticalVelocity;
             }
 
-            IsRunningInput = run;
-
-            Vector3 inputDir = new Vector3(h, 0f, v);
-            if (inputDir.sqrMagnitude > 1.0f)
+            if (IsGrounded && input.ConsumeJumpPressed())
             {
-                inputDir.Normalize();
+                verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                IsGrounded = false;
             }
 
-            bool isMoving = inputDir.sqrMagnitude > 0.01f;
-            float targetSpeed = isMoving ? (IsRunningInput ? runSpeed : walkSpeed) : 0f;
+            verticalVelocity += gravity * Time.deltaTime;
+        }
 
+        private void Move()
+        {
+            Vector2 moveInput = input.MoveInput;
+
+            Vector3 cameraForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
+            Vector3 cameraRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
+            cameraForward.y = 0f;
+            cameraRight.y = 0f;
+            cameraForward.Normalize();
+            cameraRight.Normalize();
+
+            Vector3 moveDirection = cameraForward * moveInput.y + cameraRight * moveInput.x;
+            float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
+
+            if (moveDirection.sqrMagnitude > 0.0001f)
+            {
+                moveDirection.Normalize();
+
+                // Rotate robot to face the screen/camera movement direction
+                Quaternion offsetRot = Quaternion.Euler(0f, modelFacingOffsetDegrees, 0f);
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up) * offsetRot;
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
+
+            float targetSpeed = (input.RunHeld ? runSpeed : walkSpeed) * inputMagnitude;
             currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * Time.deltaTime);
 
-            if (isMoving)
-            {
-                // Align movement 100% with camera screen orientation:
-                // W = UP on screen (camForward)
-                // S = DOWN on screen (-camForward)
-                // D = RIGHT on screen (camRight)
-                // A = LEFT on screen (-camRight)
-                Vector3 camForward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
-                Vector3 camRight = cameraTransform != null ? cameraTransform.right : Vector3.right;
-                camForward.y = 0f;
-                camRight.y = 0f;
+            Vector3 velocity = moveDirection * currentSpeed + Vector3.up * verticalVelocity;
+            controller.Move(velocity * Time.deltaTime);
 
-                if (camForward.sqrMagnitude < 0.001f) camForward = Vector3.forward;
-                else camForward.Normalize();
-
-                if (camRight.sqrMagnitude < 0.001f) camRight = Vector3.right;
-                else camRight.Normalize();
-
-                moveDirection = (camForward * inputDir.z + camRight * inputDir.x).normalized;
-
-                if (moveDirection.sqrMagnitude > 0.001f)
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                }
-            }
-            else
-            {
-                moveDirection = Vector3.zero;
-            }
-
-            // Single combined CharacterController.Move call per frame
-            Vector3 finalVelocity = (moveDirection * currentSpeed) + verticalVelocity;
-            characterController.Move(finalVelocity * Time.deltaTime);
-
-            CurrentSpeedNormalized = targetSpeed > 0f ? (currentSpeed / runSpeed) : 0f;
-        }
-
-        private void UpdateAnimator()
-        {
-            if (animator == null) return;
-
-            animator.SetFloat(SpeedHash, CurrentSpeedNormalized, 0.1f, Time.deltaTime);
-            animator.SetBool(IsGroundedHash, IsGrounded);
-            animator.SetBool(IsMovingHash, CurrentSpeedNormalized > 0.05f);
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Vector3 checkPos = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.15f;
-            Gizmos.color = IsGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(checkPos, groundCheckRadius);
+            CurrentSpeedNormalized = runSpeed > 0f ? currentSpeed / runSpeed : 0f;
         }
     }
 }

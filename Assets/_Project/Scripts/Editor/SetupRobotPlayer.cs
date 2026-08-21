@@ -1,9 +1,13 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using Robot.Player.Movement;
 using Robot.Player.CameraControl;
+using Robot.Player;
+using Robot.Input;
 using Robot.Robots.Customization;
 using Robot.UI.HUD;
+using Unity.Cinemachine;
 
 namespace Robot.Editor
 {
@@ -33,11 +37,33 @@ namespace Robot.Editor
                 cc.radius = 0.35f;
                 cc.height = 1.8f;
 
+                // Input is intentionally the only component that knows Input System actions.
+                PlayerInputReader input = player.GetComponent<PlayerInputReader>();
+                if (input == null) input = player.AddComponent<PlayerInputReader>();
+                input.Configure(AssetDatabase.LoadAssetAtPath<UnityEngine.InputSystem.InputActionAsset>(
+                    "Assets/_Project/Settings/Input/InputSystem_Actions.inputactions"));
+
                 // Setup RobotMovementController
                 RobotMovementController movement = player.GetComponent<RobotMovementController>();
                 if (movement == null)
                 {
                     movement = player.AddComponent<RobotMovementController>();
+                }
+
+                if (player.GetComponent<RobotAnimator>() == null)
+                {
+                    player.AddComponent<RobotAnimator>();
+                }
+
+                foreach (VirtualJoystick joystick in Object.FindObjectsByType<VirtualJoystick>(FindObjectsSortMode.None))
+                {
+                    joystick.Configure(input);
+                    EditorUtility.SetDirty(joystick);
+                }
+                foreach (MobileTouchLook lookArea in Object.FindObjectsByType<MobileTouchLook>(FindObjectsSortMode.None))
+                {
+                    lookArea.Configure(input);
+                    EditorUtility.SetDirty(lookArea);
                 }
 
                 // Setup RobotColorCustomizer
@@ -61,23 +87,57 @@ namespace Robot.Editor
                 Debug.LogWarning("[RobotSetup] Could not find 'RobotPlayer' in active scene.");
             }
 
-            // 2. Find or setup Main Camera
+            // 2. The physical camera owns the Cinemachine Brain. The virtual camera is separate.
             Camera mainCam = Camera.main;
             if (mainCam != null)
             {
-                ThirdPersonCamera tpc = mainCam.GetComponent<ThirdPersonCamera>();
+                if (mainCam.GetComponent<CinemachineBrain>() == null)
+                {
+                    mainCam.gameObject.AddComponent<CinemachineBrain>();
+                }
+
+                GameObject virtualCameraObject = GameObject.Find("RobotThirdPersonCamera");
+                if (virtualCameraObject == null)
+                {
+                    virtualCameraObject = new GameObject("RobotThirdPersonCamera");
+                }
+                if (virtualCameraObject.GetComponent<CinemachineCamera>() == null)
+                {
+                    virtualCameraObject.AddComponent<CinemachineCamera>();
+                }
+                if (virtualCameraObject.GetComponent<CinemachineOrbitalFollow>() == null)
+                {
+                    virtualCameraObject.AddComponent<CinemachineOrbitalFollow>();
+                }
+                
+                CinemachineDeoccluder deoccluder = virtualCameraObject.GetComponent<CinemachineDeoccluder>();
+                if (deoccluder == null)
+                {
+                    deoccluder = virtualCameraObject.AddComponent<CinemachineDeoccluder>();
+                }
+                deoccluder.IgnoreTag = "Player";
+                deoccluder.MinimumDistanceFromTarget = 0.8f;
+
+                ThirdPersonCameraController tpc = virtualCameraObject.GetComponent<ThirdPersonCameraController>();
                 if (tpc == null)
                 {
-                    tpc = mainCam.gameObject.AddComponent<ThirdPersonCamera>();
+                    tpc = virtualCameraObject.AddComponent<ThirdPersonCameraController>();
                 }
 
                 if (player != null)
                 {
                     tpc.SetTarget(player.transform);
+                    RobotMovementController rmc = player.GetComponent<RobotMovementController>();
+                    if (rmc != null)
+                    {
+                        rmc.SetCameraTransform(mainCam.transform);
+                    }
                 }
 
                 Debug.Log($"[RobotSetup] Successfully attached ThirdPersonCamera to '{mainCam.name}'.");
             }
+
+            EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         }
     }
 }

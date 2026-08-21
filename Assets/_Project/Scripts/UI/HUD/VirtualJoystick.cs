@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Robot.Player.Movement;
+using Robot.Input;
 
 namespace Robot.UI.HUD
 {
@@ -11,8 +11,7 @@ namespace Robot.UI.HUD
         [SerializeField] private RectTransform joystickHandle;
         [SerializeField] private float handleRange = 100.0f;
 
-        [Header("Player Movement Target")]
-        [SerializeField] private RobotMovementController movementController;
+        [SerializeField] private PlayerInputReader inputReader;
 
         public Vector2 InputVector { get; private set; }
 
@@ -25,11 +24,9 @@ namespace Robot.UI.HUD
                 joystickBackground = GetComponent<RectTransform>();
             }
 
-            if (movementController == null)
-            {
-                movementController = FindFirstObjectByType<RobotMovementController>();
-            }
         }
+
+        public void Configure(PlayerInputReader reader) => inputReader = reader;
 
         public void OnPointerDown(PointerEventData eventData)
         {
@@ -67,9 +64,9 @@ namespace Robot.UI.HUD
                 );
             }
 
-            if (movementController != null)
+            if (inputReader != null)
             {
-                movementController.MovementInput = InputVector;
+                inputReader.SetMobileMove(InputVector);
             }
         }
 
@@ -81,9 +78,9 @@ namespace Robot.UI.HUD
                 joystickHandle.anchoredPosition = Vector2.zero;
             }
 
-            if (movementController != null)
+            if (inputReader != null)
             {
-                movementController.MovementInput = Vector2.zero;
+                inputReader.SetMobileMove(Vector2.zero);
             }
         }
     }

@@ -653,7 +653,7 @@ PrefabInstance:
     - target: {fileID: 2523697088536518646, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: cameraTransform
       value: 
-      objectReference: {fileID: 330585546}
+      objectReference: {fileID: 98604344}
     - target: {fileID: 2523697088536518646, guid: 84ab69a7810b43fab622fc0e2807c90d, type: 3}
       propertyPath: groundCheckPoint
       value: 
@@ -778,11 +778,11 @@ MonoBehaviour:
   CollideAgainst:
     serializedVersion: 2
     m_Bits: 1
-  IgnoreTag: Player
+  IgnoreTag: 
   TransparentLayers:
     serializedVersion: 2
     m_Bits: 0
-  MinimumDistanceFromTarget: 0.8
+  MinimumDistanceFromTarget: 0.3
   AvoidObstacles:
     Enabled: 1
     DistanceLimit: 0
@@ -814,7 +814,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b5d7c088409d9a40b7b09aa707777f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineOrbitalFollow
-  TargetOffset: {x: 0, y: 1.2, z: 0}
+  TargetOffset: {x: 0, y: 0, z: 0}
   TrackerSettings:
     BindingMode: 4
     PositionDamping: {x: 1, y: 1, z: 1}
