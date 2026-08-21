@@ -5,12 +5,12 @@ using Robot.Input;
 namespace Robot.Player.CameraControl
 {
     /// <summary>
-    /// Professional Third-Person Camera Controller implementing full specification:
-    /// - Smooth position follow (no rigid camera snapping)
+    /// Professional Third-Person Camera Controller:
+    /// - Zeroes out Cinemachine double-damping & double-offset conflicts for exact chest-level framing (1.2m)
+    /// - Smooth position follow (positionDamping)
     /// - Responsive, smooth mouse orbit (yaw & pitch)
     /// - Camera-relative movement support
     /// - Smooth auto-aligning behind player movement heading when walking
-    /// - Obstacle deocclusion & consistent framing (15° default pitch, 5m distance, 1.2m target offset)
     /// </summary>
     [RequireComponent(typeof(CinemachineCamera), typeof(CinemachineOrbitalFollow))]
     public sealed class ThirdPersonCameraController : MonoBehaviour
@@ -35,13 +35,13 @@ namespace Robot.Player.CameraControl
         [SerializeField, Min(0.01f)] private float mouseSensitivity = 0.15f;
 
         [Header("Smooth Damping Times")]
-        [SerializeField, Min(0.01f)] private float positionDamping = 0.08f;
-        [SerializeField, Min(0.01f)] private float rotationDamping = 0.06f;
+        [SerializeField, Min(0.01f)] private float positionDamping = 0.05f;
+        [SerializeField, Min(0.01f)] private float rotationDamping = 0.05f;
 
         [Header("Auto-Align Behind Player")]
         [SerializeField] private bool enableAutoAlign = true;
         [SerializeField, Min(0.1f)] private float autoAlignDelay = 0.4f;
-        [SerializeField, Min(0.01f)] private float autoAlignDamping = 0.35f;
+        [SerializeField, Min(0.01f)] private float autoAlignDamping = 0.3f;
 
         private CinemachineCamera virtualCamera;
         private CinemachineOrbitalFollow orbitalFollow;
@@ -158,12 +158,10 @@ namespace Robot.Player.CameraControl
             }
             else if (enableAutoAlign && isMoving && (Time.time - lastMouseInputTime > autoAlignDelay))
             {
-                // Smoothly align camera behind character movement direction when walking
                 float playerHeading = target.eulerAngles.y;
                 targetYaw = Mathf.SmoothDampAngle(targetYaw, playerHeading, ref autoAlignVelocity, autoAlignDamping);
             }
 
-            // Smooth interpolation for camera rotation angles
             currentYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref yawVelocity, rotationDamping);
             currentPitch = Mathf.SmoothDampAngle(currentPitch, targetPitch, ref pitchVelocity, rotationDamping);
         }
@@ -213,7 +211,12 @@ namespace Robot.Player.CameraControl
             if (orbitalFollow != null)
             {
                 orbitalFollow.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
+                
+                // Zero out Cinemachine's internal target offset and damping to avoid double-offset and double-damping!
                 orbitalFollow.TargetOffset = Vector3.zero;
+                orbitalFollow.TrackerSettings.PositionDamping = Vector3.zero;
+                orbitalFollow.TrackerSettings.RotationDamping = Vector3.zero;
+                orbitalFollow.TrackerSettings.QuaternionDamping = 0f;
             }
         }
 
